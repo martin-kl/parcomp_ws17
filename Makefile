@@ -7,9 +7,17 @@ CFLAGS = -Wall -g -std=c99 $(DEFS)
 
 all: sqsort
 
-sqsort: 
-	gcc -o sqsort -O3 sqsort.c
+sqsort: sqsort.o generator.o
+	gcc -o sqsort -O3 sqsort.o generator.o
+
+
+%.o: %.c
+		gcc -Wall -c -o $@ $<
+#sqsort.o:
+#	gcc -c -o sqsort.o sqsort.c
 	
+#generator.o:
+#	gcc -c -o generator.o generator.c
+
 clean:
-	rm -f sqsort sqsort.o
-	#rm -f $(OBJECTFILES) client server
+	rm -f sqsort sqsort.o generator.o
