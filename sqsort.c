@@ -1,6 +1,9 @@
 //serial qsort implementation for reference:
 //from: geeksforgeeks.org
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <sys/time.h>
 #include "generator.h"
 
 /* The main function that implements QuickSort
@@ -21,18 +24,95 @@ void swap(int* a, int* b);
 /* Function to print an array */
 void printArray(int arr[], int size);
 
+//quick hack for time measurement:
+typedef unsigned long long usecs;
+
+usecs mytime() {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return (usecs)now.tv_usec + (usecs)now.tv_sec*1000000L;
+}
 
 //### Implementation ###//
 
 
-int main() {
-    /*int arr[] = {10, 7, 8, 9, 1, 5};
-    int n = sizeof(arr) / sizeof(arr[0]);
-    quickSort(arr, 0, n-1);
-    printf("Sorted array: ");
-    printArray(arr, n);
-    return 0;
+int main(int argc, char *argv[]) {
+    int *array;
+    int type = 0;
+    int datatype = 0;
+    unsigned seed;
+    int n = ARRAY_SIZE;
+
+    usecs start, stop;
+
+    for(int i = 1; i < argc && argv[i][0] =='-'; i++) {
+        if (argv[i][1] == 'n') {
+            i++;
+            sscanf(argv[i], "%d", &n); //number of elements
+            assert(n > 0);
+        }else if (argv[i][1] == 't') {
+            i++;
+            sscanf(argv[i], "%d", &type); //sequence type, 0=irgendwas, 1=27 on every number, 2=ascending, 3=descending, 4=random
+            //FIXME real value for type < xx
+            assert(type >= 0 && type < 5);
+        }else if (argv[i][1] == 's') {
+            //TODO seed is not used yet - should we pass this to the generator?
+            i++;
+            sscanf(argv[i], "%d", &seed); //seed
+        }else if(argv[i][1] == 'd') {
+            //STILL TODO - cause array of values is only int or should we add both (int and double array??)
+            i++;
+            sscanf(argv[i], "%d", &datatype); //datatype, 0 == int, 1 == double
+            assert((datatype == 0) || (datatype == 1));
+        }else {
+            printf("invalid argument, valid syntax: ./sqsort [-n xxxx] [-d x] [-t x] [-s xxx]\n");
+            return(0);
+        }
+    }
+
+    //generate array for values:
+    //TODO fix this for all datatypes
+    if(type == 0) {
+        //this case was already in the presets from the homepage, creates a descending array
+        array = (int *)malloc(sizeof(int) * n);
+        for(int i = 0; i < n; i++) array[i] = (100-i)%27;
+    }else if(type == 1) {
+        array = generateIntSameNumbers(n);
+    }else if(type == 2) {
+        array = generateIntAscendingNumbers(n);
+    }else if(type == 3) {
+        array = generateIntDescendingNumbers(n);
+    }else if(type == 4) {
+        array = generateIntRandomNumbers(n, 0, 100);
+    }else {
+        printf("invalid type range, 0-4 is only valid\n");
+        return 0;
+    }
+
+    /*
+    printf("generated array: ");
+    printArray(array, n);
     */
+
+    start = mytime();
+    quickSort(array, 0, n);
+    stop = mytime();
+
+    /*
+    printf("sorted array: ");
+    printArray(array, n);
+    */
+    
+    //verify result:
+    for (int i = 0; i < n-1; i++) assert(array[i] <= array[i+1]);
+
+    printf("Sorting time %lld\n", stop-start);
+
+    free(array);
+    return 0;
+}
+
+void testEverythingWithInts() {
     int* array = generateIntAscendingNumbers(ARRAY_SIZE);
     printf("generated array (int ascending): ");
     printArray(array, ARRAY_SIZE);
@@ -60,9 +140,9 @@ int main() {
     quickSort(array4, 0, ARRAY_SIZE);
     printf("sorted array: ");
     printArray(array4, ARRAY_SIZE);
-
-    return 0;
 }
+
+
 
 void quickSort(int arr[], int low, int high) {
     if (low < high) {
