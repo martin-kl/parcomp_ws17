@@ -29,6 +29,14 @@ int* generateIntDescendingNumbers(int size) {
 	return result;
 }
 
+int* generateIntPeriodicNumbers(int size) {
+    int* result = (int *)malloc(sizeof(int) * size);
+	for(int i = 0; i < size; i++) {
+		result[i] = (100-i)%27;
+	}
+	return result;
+}
+
 int* generateIntRandomNumbers(int size, int minNumber, int maxNumber) {
     int difference = maxNumber - minNumber;
     int* result = (int *)malloc(sizeof(int) * size);
@@ -66,6 +74,14 @@ double* generateDoubleDescendingNumbers(int size) {
 	for(int i = 0; i < size; i++) {
 		result[i] = number;
         number--;
+	}
+	return result;
+}
+
+double* generateDoublePeriodicNumbers(int size) {
+    double* result = (double *)malloc(sizeof(double) * size);
+	for(int i = 0; i < size; i++) {
+		result[i] = (100 - i) % 27;
 	}
 	return result;
 }

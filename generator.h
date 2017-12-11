@@ -7,4 +7,11 @@
 int* generateIntSameNumbers(int size);
 int* generateIntAscendingNumbers(int size);
 int* generateIntDescendingNumbers(int size);
+int* generateIntPeriodicNumbers(int size);
 int* generateIntRandomNumbers(int size, int minNumber, int maxNumber);
+
+double* generateDoubleSameNumbers(int size);
+double* generateDoubleAscendingNumbers(int size);
+double* generateDoubleDescendingNumbers(int size);
+double* generateDoublePeriodicNumbers(int size);
+double* generateDoubleRandomNumbers(int size, double minNumber, double maxNumber);

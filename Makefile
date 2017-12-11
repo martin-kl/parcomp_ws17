@@ -12,7 +12,8 @@ sqsort: sqsort.o generator.o
 
 
 %.o: %.c
-		gcc -Wall -c -o $@ $<
+		gcc -Wall -O3 -c -o $@ $<
+
 #sqsort.o:
 #	gcc -c -o sqsort.o sqsort.c
 	

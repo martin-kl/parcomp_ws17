@@ -73,9 +73,7 @@ int main(int argc, char *argv[]) {
     //generate array for values:
     //TODO fix this for all datatypes
     if(type == 0) {
-        //this case was already in the presets from the homepage, creates a descending array
-        array = (int *)malloc(sizeof(int) * n);
-        for(int i = 0; i < n; i++) array[i] = (100-i)%27;
+        array = generateIntPeriodicNumbers(n);
     }else if(type == 1) {
         array = generateIntSameNumbers(n);
     }else if(type == 2) {
