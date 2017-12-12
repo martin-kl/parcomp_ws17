@@ -1,0 +1,11 @@
+Algorithmus für Quicksort and mergesort - für das partition mit prefix summen:
+04_ParComp-OpenMP.pdf - 381 von 393
+
+dabei fehlt dann noch der 
+
+
+
+
+Wichtig für CILK: wenn man das Programm kompiliert mit gcc -DSEQUENTIAL sollte das Programm sequentiell ablaufen (siehe Folie 363 von 393 in 04_ParComp-OpenMP)
+
+
