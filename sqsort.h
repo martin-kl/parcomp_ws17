@@ -4,7 +4,7 @@
  *
  * arr[] --> Array to be sorted,
  * low  --> Starting index,
- * high  --> Ending index
+ * high  --> Ending index (attention, high = sizeOfArray-1)
  * */
 void seqQuickSort(int arr[], int low, int high);
 

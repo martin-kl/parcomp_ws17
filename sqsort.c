@@ -1,6 +1,8 @@
+//serial qsort implementation for reference:
+//from: geeksforgeeks.org
+
 #include <stdio.h>
 #include "sqsort.h"
-//#include "generator.h"
 
 /* This function takes last element as pivot, places
 	the pivot element at its correct position in sorted
@@ -10,7 +12,8 @@
 int partition (int arr[], int low, int high);
 // A utility function to swap two elements
 void swap(int* a, int* b);
-//quick hack for time measurement:
+
+
 
 
 void seqQuickSort(int arr[], int low, int high) {

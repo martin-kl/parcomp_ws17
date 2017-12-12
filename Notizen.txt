@@ -9,3 +9,4 @@ dabei fehlt dann noch der
 Wichtig für CILK: wenn man das Programm kompiliert mit gcc -DSEQUENTIAL sollte das Programm sequentiell ablaufen (siehe Folie 363 von 393 in 04_ParComp-OpenMP)
 
 
+Anmerkung zu aktueller Wahl des Privots (aktulle Wahl: erstes element) - wenn die zahlen aufsteigend sortiert sind (bei cilkqsort parameter -s 2) schafft das auf meinem pc nichtmal 1 000 000 zahlen weil er immer rekursiv weitergeht

@@ -5,25 +5,24 @@ CFLAGS = -Wall -g -std=c99 $(DEFS)
 
 .PHONY: all clean
 
-all: main cilkqsort
+all: main cilkMain
 
-main: sqsort.o generator.o main.o
-	gcc -o mainSeq -O3 sqsort.o generator.o main.o
+main: sqsort.o generator.o main.o cqsort.o
+	gcc -Wall -fcilkplus -o $@ -O3 sqsort.o generator.o main.o cqsort.o
+	#gcc -Wall -fcilkplus -o main -O3 sqsort.o generator.o main.o cqsort.o
 
-cilkqsort: sqsort.o cilkqsort.o
-	gcc -Wall -fcilkplus -O3 cilkqsort.o sqsort.o -o cilkqs
+cilkMain: sqsort.o cqsort.o cqmain.o
+	gcc -Wall -fcilkplus -O3 cqsort.o sqsort.o cqmain.o -o cilkMain
+	#gcc -Wall -fcilkplus -O3 cqsort.o sqsort.o cqmain.o -o cilkMain
 
-cilkqsort.o: cilkqsort.c
+cqsort.o: cqsort.c
+	gcc -Wall -O3 -fcilkplus -c -o $@ $<
+cqmain.o: cqmain.c
 	gcc -Wall -O3 -fcilkplus -c -o $@ $<
 
 %.o: %.c
 	gcc -Wall -O3 -c -o $@ $<
 
-#sqsort.o:
-#	gcc -c -o sqsort.o sqsort.c
-	
-#generator.o:
-#	gcc -c -o generator.o generator.c
 
 clean:
-	rm -f sqsort.o generator.o cilkqsort.o main.o mainSeq cilkqs
+	rm -f sqsort.o cqsort.o generator.o main.o main cqmain.o cilkMain
