@@ -1,7 +1,15 @@
 Algorithmus für Quicksort and mergesort - für das partition mit prefix summen:
 04_ParComp-OpenMP.pdf - 381 von 393
 
-dabei fehlt dann noch der 
+dabei fehlt dann noch der Exscan
+zu Exscan:
+  03_ParComp-HPC-Prefix-sums - Folie 77-79 von 149 zu Quicksort mit parallelen partition
+  interessant für Cilk scan: 04_ParComp Folie 369-373
+
+  Algorithmen dafür dann von 83 - 134
+    Vielleicht 127 + der davor interessant, da steht dass wir den verwenden sollen wenn blocking applicable ist!!
+    Achtung: 3. Version (Doubling prefix-sums algorithm) ist NICHT arbeitsoptimal!!
+
 
 
 
@@ -9,4 +17,4 @@ dabei fehlt dann noch der
 Wichtig für CILK: wenn man das Programm kompiliert mit gcc -DSEQUENTIAL sollte das Programm sequentiell ablaufen (siehe Folie 363 von 393 in 04_ParComp-OpenMP)
 
 
-Anmerkung zu aktueller Wahl des Privots (aktulle Wahl: erstes element) - wenn die zahlen aufsteigend sortiert sind (bei cilkqsort parameter -s 2) schafft das auf meinem pc nichtmal 1 000 000 zahlen weil er immer rekursiv weitergeht
+Anmerkung zu aktueller Wahl des Privots (aktulle Wahl: erstes element) - wenn die zahlen aufsteigend/absteigend sortiert sind (bei cilkqsort parameter -s 2) schafft das auf meinem pc nichtmal 1 000 000 zahlen weil er immer rekursiv weitergeht

@@ -119,5 +119,6 @@ int main(int argc, char *argv[]) {
   printf("Sorting time for parallel algorithm: %lld\n", stopPar-startPar);
 
   free(array);
+  free(array2);
   return 0;
 }
