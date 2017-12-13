@@ -4,7 +4,7 @@
 
 //functions in generator.c:
 
-int* generateIntSameNumbers(int size);
+int* generateIntSameNumbers(int size, int numberToGenerate);
 int* generateIntAscendingNumbers(int size);
 int* generateIntDescendingNumbers(int size);
 int* generateIntPeriodicNumbers(int size);
@@ -15,3 +15,7 @@ double* generateDoubleAscendingNumbers(int size);
 double* generateDoubleDescendingNumbers(int size);
 double* generateDoublePeriodicNumbers(int size);
 double* generateDoubleRandomNumbers(int size, double minNumber, double maxNumber);
+
+
+/* Function to print an array, second parameter is length of arrray */
+void printArray(int arr[], int n);

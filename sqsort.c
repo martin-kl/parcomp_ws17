@@ -1,7 +1,6 @@
 //serial qsort implementation for reference:
 //from: geeksforgeeks.org
 
-#include <stdio.h>
 #include "sqsort.h"
 
 /* This function takes last element as pivot, places
@@ -51,6 +50,7 @@ void swap(int* a, int* b) {
     *b = t;
 }
 
+/*
 void printArray(int arr[], int size) {
     printf("[");
     int i;
@@ -58,3 +58,4 @@ void printArray(int arr[], int size) {
         printf("%d ", arr[i]);
     printf("%d]\n", arr[size-1]);
 }
+*/

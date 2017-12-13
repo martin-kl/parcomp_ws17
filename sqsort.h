@@ -7,6 +7,3 @@
  * high  --> Ending index (attention, high = sizeOfArray-1)
  * */
 void seqQuickSort(int arr[], int low, int high);
-
-/* Function to print an array, second parameter is length of arrray */
-void printArray(int arr[], int n);

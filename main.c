@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
   if(type == 0) {
     array = generateIntPeriodicNumbers(n);
   }else if(type == 1) {
-   array = generateIntSameNumbers(n);
+   array = generateIntSameNumbers(n, 27);
   }else if(type == 2) {
    array = generateIntAscendingNumbers(n);
   }else if(type == 3) {

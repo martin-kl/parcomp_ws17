@@ -1,12 +1,13 @@
 //generates different arrays with size = xxxxx (make a header file for this
 #include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 #include "generator.h"
 
-int* generateIntSameNumbers(int size) {
-    int* result = (int *)malloc(sizeof(int) * size);
+int* generateIntSameNumbers(int size, int numberToGenerate){
+  int* result = (int *)malloc(sizeof(int) * size);
 	for(int i = 0; i < size; i++) {
-		result[i] = 27;
+		result[i] = numberToGenerate;
 	}
 	return result;
 }
@@ -97,4 +98,12 @@ double* generateDoubleRandomNumbers(int size, double minNumber, double maxNumber
             result[i] = randDouble;
 	}
 	return result;
+}
+
+void printArray(int arr[], int size) {
+  printf("[");
+  int i;
+  for (i=0; i < size-1; i++)
+    printf("%d ", arr[i]);
+  printf("%d]\n", arr[size-1]);
 }
