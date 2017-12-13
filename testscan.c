@@ -3,9 +3,9 @@
 #include <stdio.h>
 #include "generator.h"
 
-#define NELEMENTS 100
+#define NELEMENTS 1000000000
 //TODO find good value for UNIT
-#define UNIT 50
+#define UNIT 100
 
 #ifdef SEQUENTIAL
 #define cilk_spawn
@@ -50,25 +50,28 @@ void cilkscan(int a[], int n) {
   assert(n > 0);
   if (n == 1) return;
 
-  //TODO check what happens if n/2 is odd - should work but check it
   int *y = (int *)malloc((n/2) * sizeof(int));
   
   //data parallel loop:
-  //dataparAdd(0, n/2, a, y);
+  dataparAdd(0, n/2, a, y);
+  /* //this is the non-parallelized version
   for(int i = 0; i < n/2; i++) {
     y[i] = a[2*i] + a[2*i+1];
   }
+  */
 
   //all processors must have completed dataparAdd before we can go recursive - here we call it with y instead of a!!
   cilkscan(y, n/2);
  
   a[1] = y[0];
   //another data parallel loop: (here we wann write to a and need the values from y)
-  //dataparAdd2(1, n/2, a, y); 
+  dataparAdd2(1, n/2, a, y); 
+  /*
   for(int i = 1; i < n/2; i++) {
     a[2*i] = y[i-1] + a[2*i];
     a[2*i+1] = y[i];
   }
+  */
 
   if((n%2) != 0) { //if n is odd, treat last number
     a[n-1] = y[n/2-1] + a[n-1];
@@ -78,12 +81,13 @@ void cilkscan(int a[], int n) {
 //data parallel loop for adding some elements
 void dataparAdd(int i, int j, int a[], int y[]) {
   if (j-i <= UNIT) {
-    //printf("switching to seq algorithm, i=%i, j=%i...\n", i, j);
+    //printf("switching to seq algorithm (dataparAdd), i=%i, j=%i...\n", i, j);
     for(int k = i; k < j; k++) {
       y[k] = a[2*k] + a[2*k+1];
     }
   } else {
-    cilk_spawn dataparAdd(i, (i+j)/2, a, y);
+    //here i changed to code to (i+j)/2+1 otherwise it was not correct!!
+    cilk_spawn dataparAdd(i, (i+j)/2+1, a, y);
     cilk_spawn dataparAdd((i+j)/2 + 1, j, a, y);
     cilk_sync;
   }
@@ -92,13 +96,14 @@ void dataparAdd(int i, int j, int a[], int y[]) {
 //data parallel loop for adding some elements
 void dataparAdd2(int i, int j, int a[], int y[]) {
   if (j-i <= UNIT) {
-    //printf("switching to seq algorithm, i=%i, j=%i...\n", i, j);
+    //printf("switching to seq algorithm (dataparAdd2), i=%i, j=%i...\n", i, j);
     for(int k = i; k < j; k++) {
-      a[2*k] = y[k-1] + y[2*k];
+      a[2*k] = y[k-1] + a[2*k];
       a[2*k+1] = y[k];
     }
   } else {
-    cilk_spawn dataparAdd2(i, (i+j)/2, a, y);
+    //here i changed to code to (i+j)/2+1 otherwise it was not correct!!
+    cilk_spawn dataparAdd2(i, (i+j)/2+1, a, y);
     cilk_spawn dataparAdd2((i+j)/2 + 1, j, a, y);
     cilk_sync;
   }
@@ -107,8 +112,8 @@ void dataparAdd2(int i, int j, int a[], int y[]) {
 
 
 int main() {
-  int *a= generateIntAscendingNumbers(NELEMENTS);
-  //int a[] = {1,2,3,4};
+  int *a= generateIntSameNumbers(NELEMENTS, 1);
+  //int *a= generateIntAscendingNumbers(NELEMENTS);
   int *sum= (int *)malloc(NELEMENTS * sizeof(int));
 
   printf("testing inclusive sum with n=%i\n", NELEMENTS);
@@ -126,14 +131,14 @@ int main() {
   printf("verification for seq algorithm done.\n");
 
 
-  printf("now start cilk algorithm with same input array...\n");
-
+  printf("\nnow start cilk algorithm with same input array...\n");
 
   /*
   printf("\narray to sum= ");
   printArray(a, NELEMENTS);
   printf("\n");
   */
+
   cilkscan(a, NELEMENTS);
 
   /*

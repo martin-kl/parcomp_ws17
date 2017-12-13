@@ -19,8 +19,7 @@ cilkMain: sqsort.o cqsort.o cqmain.o
 testscan : testscan.o generator.o
 	gcc -Wall -fcilkplus -O3 testscan.o generator.o -o $@
 testscan.o: testscan.c
-	gcc -Wall -fcilkplus -c -o $@ $<
-	#gcc -Wall -O3 -fcilkplus -c -o $@ $<
+	gcc -Wall -O3 -fcilkplus -c -o $@ $<
 
 #needed for cilk:
 cqsort.o: cqsort.c
