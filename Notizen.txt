@@ -4,7 +4,8 @@ Algorithmus für Quicksort and mergesort - für das partition mit prefix summen:
 dabei fehlt dann noch der Exscan
 zu Exscan:
   03_ParComp-HPC-Prefix-sums - Folie 77-79 von 149 zu Quicksort mit parallelen partition
-  interessant für Cilk scan: 04_ParComp Folie 369-373
+  interessant für Cilk scan: 04_ParComp Folie 369-373 
+    brauchen wir immer wenn wir datenparallele Schleifen mit Cilk parallelisieren wollen!
 
   Algorithmen dafür dann von 83 - 134
     Vielleicht 127 + der davor interessant, da steht dass wir den verwenden sollen wenn blocking applicable ist!!

@@ -33,10 +33,13 @@ void cilkQuickSort(int a[], int n, int unit)
   int pivot = a[0]; // choose an element non-randomly...
   i = 0; j = n;
   for (;;) {
-    while (++i<j&&a[i]<pivot);
-    while (a[--j]>pivot);
-    if (i>=j) break;
-    aa = a[i]; a[i] = a[j]; a[j] = aa;
+    while (++i < j && a[i] < pivot);
+    while (a[--j] > pivot);
+    if (i >= j) break;
+    //swap a[i] and a[j]
+    aa = a[i];
+    a[i] = a[j];
+    a[j] = aa;
   }
   // swap pivot
   aa = a[0]; a[0] = a[j]; a[j] = aa;
@@ -44,7 +47,9 @@ void cilkQuickSort(int a[], int n, int unit)
   //spawn recursive cilk threads
   //printf("call quicksort recursive with first element in a=%i, j=%i, unit=%i\n", a[0], j, unit);
   cilk_spawn cilkQuickSort(a, j, unit);
+  
   //printf("call quicksort recursive with a=%i, j=%i, unit=%i\n", a[j+1], n-j-1, unit);
   cilk_spawn cilkQuickSort(a+j+1, n-j-1, unit);
+
   cilk_sync;
 }
