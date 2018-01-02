@@ -9,6 +9,7 @@ int* generateIntAscendingNumbers(int size);
 int* generateIntDescendingNumbers(int size);
 int* generateIntPeriodicNumbers(int size);
 int* generateIntRandomNumbers(int size, int minNumber, int maxNumber);
+int* generateIntRandomNumbersWithSeed(int size, int minNumber, int maxNumberm, unsigned seed);
 
 double* generateDoubleSameNumbers(int size);
 double* generateDoubleAscendingNumbers(int size);

@@ -25,8 +25,6 @@ void _partition(int a[], int start, int end, struct partitionResult * result, in
   //precond: pivot is outside of range: start - end
   int aa, i, j;
   i = start-1; j = end+1;
-  printf("a vor partiton von %i nach %i\n", start, end);
-  printArray(a+start, end-start+1);
 
   for (;;) {
     while (++i<j&&a[i] < pivotValue); // has one advantage
@@ -38,17 +36,11 @@ void _partition(int a[], int start, int end, struct partitionResult * result, in
   result->smaller = j-start+1;
   result->larger = ((end - start) + 1) - result->smaller;
 
-  printf("a nach partiton von %i nach %i\n", start, end);
-  printArray(a+start, end-start+1);
 }
 
 void quicksort(int a[], int n, int maxThreads, int unit)
 {
-  printf("\n\n------cheffe thread---------\n");
   if (n <= unit) {
-    printf("sequentially solving (n: %i)\n", n);
-    printArray(a, n);
-    printf("\n");
     seqQuickSort(a, 0, n-1);
     return;
   }
@@ -78,70 +70,51 @@ void quicksort(int a[], int n, int maxThreads, int unit)
     //if i is last thread and n%threads != 0 the end for the last thread is n
     end = i == threads-1 ? n-1 : (i+1) * nPThreads -1;
 
-    #pragma omp critical
-    {
-      printf("\n\t\t------%i thread---------\n", i);
-      //call _partition
-      struct partitionResult result;
-      _partition(a, start, end, &result, pivotValue);
-      memcpy(helperArray+start, a+start, (sizeof(int) * (end-start+1)));
-      printf("helper: ");
-      printArray(helperArray+start, end-start+1);
-      printf("\n");
+    //call _partition
+    struct partitionResult result;
+    _partition(a, start, end, &result, pivotValue);
+    memcpy(helperArray+start, a+start, (sizeof(int) * (end-start+1)));
 
-      smaller[i] = result.smaller;
-      larger[i] = result.larger;
-      printf("\t\t\tstart = %i, end = %i\n", start, end);
-      printf("\t\t\tsmaller[i] = %i, larger[i] = %i\n", smaller[i], larger[i]);
-      printf("\t\t\tpivotIndex: %i, pivotValue: %i\n", pivotIndex, pivotValue);
-      printf("\t\t------end %i thread---------\n", i);
+    smaller[i] = result.smaller;
+    larger[i] = result.larger;
 
-      assert((smaller[i] + larger[i]) == (end-start+1));
-    }
+    assert((smaller[i] + larger[i]) == (end-start+1));
 
     #pragma omp barrier
     #pragma omp single
     {
-      printf("a before filling in smaller\n");
-      printArray(a, n);
       for (int k = 1; k < threads; k++) {
         smaller[k] += smaller[k-1];
         larger[k] += larger[k-1];
       }
     }
-    #pragma omp critical
-    {
-      // Write results to global array
-      int smallerFromIndex = i == 0 ? 0 : smaller[i-1];
-      int smallerToIndex = smaller[i];
-      int helperI = start;
-      for (int ai = smallerFromIndex; ai < smallerToIndex; ai++) {
-        a[ai] = helperArray[helperI++];
-      }
-      printf("a after filling in smaller\n");
-      printArray(a, n);
+    // Write results to global array
+    int smallerFromIndex = i == 0 ? 0 : smaller[i-1];
+    int smallerToIndex = smaller[i];
+    int helperI = start;
+    for (int ai = smallerFromIndex; ai < smallerToIndex; ai++) {
+      a[ai] = helperArray[helperI++];
+    }
 
-      //offset 1 everywhere because of pivot
-      int largerFromIndex = i == 0 ? smaller[threads-1]+1 : smaller[threads-1]+1+larger[i-1];
-      int largerToIndex = smaller[threads-1]+1+larger[i];
-      for (int ai = largerFromIndex; ai < largerToIndex; ai++) {
-        a[ai] = helperArray[helperI++];
-      }
-      printf("a after filling in larger\n");
-      printArray(a, n);
+    //offset 1 everywhere because of pivot
+    int largerFromIndex = i == 0 ? smaller[threads-1]+1 : smaller[threads-1]+1+larger[i-1];
+    int largerToIndex = smaller[threads-1]+1+larger[i];
+    for (int ai = largerFromIndex; ai < largerToIndex; ai++) {
+      a[ai] = helperArray[helperI++];
     }
   }
   //pivotIndex should always be 0 here
   a[smaller[maxThreads-1]] = pivotValue;
 
-  printf("smaller[maxThreads-1]: %i\n", smaller[maxThreads-1]);
-  printf("a after filling in pivot\n");
-  printArray(a, n);
-  printf("freeing (helperArray, n: %i,)\n", n);
   free(helperArray);
-  printf("\n\n------end cheffe thread---------\n");
-  quicksort(a, smaller[maxThreads-1], maxThreads, unit);
-  quicksort(a+smaller[maxThreads-1]+1, larger[maxThreads-1], maxThreads, unit);
+#pragma omp for nowait
+  for(int k = 0; k <= 1; k++) {
+    if(k == 0) {
+      quicksort(a, smaller[maxThreads-1], maxThreads, unit);
+    }else {
+      quicksort(a+smaller[maxThreads-1]+1, larger[maxThreads-1], maxThreads, unit);
+    }
+  }
 }
 
 #define MICRO 1000000.0
@@ -153,7 +126,7 @@ int main(int argc, char *argv[])
 
   int threads;
 
-  unsigned seed;
+  unsigned seed = 0;
 
   double start, stop;
 
@@ -165,7 +138,7 @@ int main(int argc, char *argv[])
     if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
     if (argv[i][1]=='s') i++,sscanf(argv[i],"%d",&s); //type of array
     if (argv[i][1]=='t') i++,sscanf(argv[i],"%d",&threads); //number of threads
-    if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed); //seed - currently NOT used! !!!! TODO
+    if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed); 
   }
 
   a = (int*)malloc(n*sizeof(int));
@@ -174,8 +147,6 @@ int main(int argc, char *argv[])
     if (threads > omp_get_max_threads()) threads = omp_get_max_threads();
     omp_set_num_threads(threads);
   }
-
-  printf("Number of threads %d, n=%d, seed=%d\n", threads, n, seed);
 
   if (s==0) {
     //for (i=0; i<n; i++) a[i] = (100-i)%27;
@@ -190,21 +161,25 @@ int main(int argc, char *argv[])
   } else if (s == 4) {
     //srand(seed);
     //for (i=0; i<n; i++) a[i] = rand()%n;
-    a = generateIntRandomNumbers(n, 0, 100);
+    if(seed != 0)
+      a = generateIntRandomNumbersWithSeed(n, 0, 100, seed);
+    else 
+      a = generateIntRandomNumbers(n, 0, 100);
   }else {
     printf("invalid input for type, only 0-4 is valid\n");
     return 0;
   }
 
   start = omp_get_wtime();
-  quicksort(a,n, threads, 5);
+  quicksort(a,n, threads, 1000);
   stop = omp_get_wtime();
 
-  printArray(a, n);
+  //pintArray(a, n);
   // verify
   for (i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
 
-  printf("Sorting time %.2f\n",(stop-start)*MICRO);
+  printf("Sorting time %.2f\n",(stop-start));
+  //printf("Sorting time %.2f\n",(stop-start)*MICRO);
 
   free(a);
   return 0;

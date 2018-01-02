@@ -33,7 +33,7 @@ int* generateIntDescendingNumbers(int size) {
 int* generateIntPeriodicNumbers(int size) {
     int* result = (int *)malloc(sizeof(int) * size);
 	for(int i = 0; i < size; i++) {
-		result[i] = (100-i)%2;
+		result[i] = (100-i)%27;
 	}
 	return result;
 }
@@ -50,6 +50,19 @@ int* generateIntRandomNumbers(int size, int minNumber, int maxNumber) {
 	}
 	return result;
 }
+int* generateIntRandomNumbersWithSeed(int size, int minNumber, int maxNumber, unsigned seed) {
+    int difference = maxNumber - minNumber;
+    int* result = (int *)malloc(sizeof(int) * size);
+    srand(seed);
+	for(int i = 0; i < size; i++) {
+            int random = rand();
+            random = random % difference;
+            random += minNumber;
+            result[i] = random;
+	}
+	return result;
+}
+
 
 
 
