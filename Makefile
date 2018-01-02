@@ -28,7 +28,7 @@ cqmain.o: cqmain.c
 	$(CC) -Wall -O3 -fcilkplus -c -o $@ $<
 
 openmp:
-	$(CC)	-Wall -fopenmp -O3 ompquick.c generator.c -o oqs
+	$(CC)	-Wall -fopenmp -O3 ompquick.c generator.c sqsort.c -o oqs
 
 %.o: %.c
 	$(CC) -Wall -O3 -c -o $@ $<

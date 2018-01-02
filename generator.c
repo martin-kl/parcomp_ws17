@@ -33,7 +33,7 @@ int* generateIntDescendingNumbers(int size) {
 int* generateIntPeriodicNumbers(int size) {
     int* result = (int *)malloc(sizeof(int) * size);
 	for(int i = 0; i < size; i++) {
-		result[i] = (100-i)%27;
+		result[i] = (100-i)%2;
 	}
 	return result;
 }
