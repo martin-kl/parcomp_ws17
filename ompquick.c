@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
   for (i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
 
   //printf("Sorting time %.2f\n",(stop-start));
-  printf("sorting times:\n");
+  printf("sorting times with parallel algorithm using openmp:\n");
   for (int i = 0; i < CALLS; i++) {
     printf(" > %f\n", durations[i]);
   }

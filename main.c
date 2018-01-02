@@ -18,9 +18,10 @@ int main(int argc, char *argv[]) {
   //array for sequential Sort
   int *array2;
 
-  int type = 0;
+  int s = 0;
+  //TODO datatype, but not needed
   int datatype = 0;
-  unsigned seed;
+  unsigned seed = 0;;
   int n = ARRAY_SIZE;
 
   usecs startSeq, stopSeq;
@@ -31,13 +32,12 @@ int main(int argc, char *argv[]) {
       i++;
       sscanf(argv[i], "%d", &n); //number of elements
       assert(n > 0);
-    }else if (argv[i][1] == 't') {
-      i++;
-      sscanf(argv[i], "%d", &type); //sequence type, 0=irgendwas, 1=27 on every number, 2=ascending, 3=descending, 4=random
-      //FIXME real value for type < xx
-      assert(type >= 0 && type < 5);
     }else if (argv[i][1] == 's') {
-      //TODO seed is not used yet - should we pass this to the generator?
+      i++;
+      sscanf(argv[i], "%d", &s); //sequence type, 0=periodic, 1=same number on every position, 2=ascending, 3=descending, 4=random
+      //FIXME real value for type < xx
+      assert(s >= 0 && s < 5);
+    }else if (argv[i][1] == 'S') {
       i++;
       sscanf(argv[i], "%d", &seed); //seed
     }else if(argv[i][1] == 'd') {
@@ -52,19 +52,20 @@ int main(int argc, char *argv[]) {
   }
   //generate array for values:
   //TODO fix this for all datatypes
-  if(type == 0) {
+  if(s == 0) {
     array = generateIntPeriodicNumbers(n);
-  }else if(type == 1) {
-   array = generateIntSameNumbers(n, 27);
-  }else if(type == 2) {
-   array = generateIntAscendingNumbers(n);
-  }else if(type == 3) {
-   array = generateIntDescendingNumbers(n);
-  }else if(type == 4) {
-   array = generateIntRandomNumbers(n, 0, 100);
+  }else if(s == 1) {
+    array = generateIntSameNumbers(n, 27);
+  }else if(s == 2) {
+    array = generateIntAscendingNumbers(n);
+  }else if(s == 3) {
+    array = generateIntDescendingNumbers(n);
+  }else if(s == 4) {
+    if(seed == 0) array = generateIntRandomNumbers(n, 0, 1000);
+    else array = generateIntRandomNumbersWithSeed(n, 0, 1000, seed);
   }else {
-   printf("invalid type range, 0-4 is only valid\n");
-   return 0;
+    printf("invalid type range, 0-4 is only valid\n");
+    return 0;
   } 
 
   //copy array so we can sort it once sequential and once parallel
