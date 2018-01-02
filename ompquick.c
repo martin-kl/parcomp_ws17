@@ -21,34 +21,23 @@ int randomNumberBetween(int low, int high) {
   return drandom * (high-low) + low;
 }
 
-void _partition(int a[], int start, int end, int pivotIndex, struct partitionResult * result) {
+void _partition(int a[], int start, int end, struct partitionResult * result, int pivotValue) {
+  //precond: pivot is outside of range: start - end
   int aa, i, j;
-  i = start; j = end+1;
-
+  i = start-1; j = end+1;
   printf("a vor partiton von %i nach %i\n", start, end);
   printArray(a+start, end-start+1);
-  // move pivotIndex to beginning of array so we don't need to deal with running "over" the pivot
-  if (start <= pivotIndex && pivotIndex <= end) {
-    aa = a[pivotIndex]; a[pivotIndex] = a[0]; a[0] = aa;
-    pivotIndex = 0;
-  }
+
   for (;;) {
-    while (++i<j&&a[i] < a[pivotIndex]); // has one advantage
-    while (a[--j]>a[pivotIndex] && j>=start);
+    while (++i<j&&a[i] < pivotValue); // has one advantage
+    while (a[--j] > pivotValue && j>=start);
     if (i>=j) break;
     aa = a[i]; a[i] = a[j]; a[j] = aa;
   }
 
-  // if pivot is between start and end
-  if (start <= pivotIndex && pivotIndex <= end) {
-    // swap pivot
-    aa = a[pivotIndex]; a[pivotIndex] = a[j]; a[j] = aa;
-    result->smaller = j-start;
-    result->larger = ((end - start) + 1) - result->smaller - 1;
-  } else {
-    result->smaller = j-start+1;
-    result->larger = ((end - start) + 1) - result->smaller;
-  }
+  result->smaller = j-start+1;
+  result->larger = ((end - start) + 1) - result->smaller;
+
   printf("a nach partiton von %i nach %i\n", start, end);
   printArray(a+start, end-start+1);
 }
@@ -63,8 +52,16 @@ void quicksort(int a[], int n, int maxThreads, int unit)
     seqQuickSort(a, 0, n-1);
     return;
   }
+  
+  //start parallel quicksort
   int pivotIndex = randomNumberBetween(0, n-1);
   int pivotValue = a[pivotIndex];
+  //switch pivot to first element
+  int aa = a[pivotIndex];
+  a[pivotIndex] = a[0];
+  a[0] = aa;
+  pivotIndex = 0;
+
   int smaller[maxThreads];
   int larger[maxThreads];
   int * helperArray = malloc(sizeof(int) * n);
@@ -77,37 +74,33 @@ void quicksort(int a[], int n, int maxThreads, int unit)
     int start, end;
 
     start = i*nPThreads;
+    if(i == 0) start = 1;
     //if i is last thread and n%threads != 0 the end for the last thread is n
-    if(n%threads != 0 && i == threads -1) {
-      end = n-1;
-    }else {
-      end = (i+1) * nPThreads - 1;
-    }
+    end = i == threads-1 ? n-1 : (i+1) * nPThreads -1;
+
     #pragma omp critical
     {
       printf("\n\t\t------%i thread---------\n", i);
-    //call _partition
-    struct partitionResult result;
-    _partition(a, start, end, pivotIndex, &result);
-    memcpy(helperArray+start, a+start, (sizeof(int) * (end-start+1)));
-    printf("helper: ");
-    printArray(helperArray+start, end-start+1);
-    printf("\n");
-    smaller[i] = result.smaller;
-    larger[i] = result.larger;
+      //call _partition
+      struct partitionResult result;
+      _partition(a, start, end, &result, pivotValue);
+      memcpy(helperArray+start, a+start, (sizeof(int) * (end-start+1)));
+      printf("helper: ");
+      printArray(helperArray+start, end-start+1);
+      printf("\n");
+
+      smaller[i] = result.smaller;
+      larger[i] = result.larger;
       printf("\t\t\tstart = %i, end = %i\n", start, end);
       printf("\t\t\tsmaller[i] = %i, larger[i] = %i\n", smaller[i], larger[i]);
       printf("\t\t\tpivotIndex: %i, pivotValue: %i\n", pivotIndex, pivotValue);
       printf("\t\t------end %i thread---------\n", i);
-      if (start <= pivotIndex && pivotIndex <= end) {
-        assert((smaller[i] + larger[i] + 1) == (end-start+1));
-      } else {
-        assert((smaller[i] + larger[i]) == (end-start+1));
-      }
+
+      assert((smaller[i] + larger[i]) == (end-start+1));
     }
 
-#pragma omp barrier
-#pragma omp single
+    #pragma omp barrier
+    #pragma omp single
     {
       printf("a before filling in smaller\n");
       printArray(a, n);
@@ -118,31 +111,29 @@ void quicksort(int a[], int n, int maxThreads, int unit)
     }
     #pragma omp critical
     {
-    // Write results to global array
-    int smallerFromIndex = i == 0 ? 0 : smaller[i-1];
-    int smallerToIndex = smaller[i];
-    int helperI = start;
-    for (int ai = smallerFromIndex; ai < smallerToIndex; ai++) {
-      a[ai] = helperArray[helperI++];
-    }
-    printf("a after filling in smaller\n");
-    printArray(a, n);
+      // Write results to global array
+      int smallerFromIndex = i == 0 ? 0 : smaller[i-1];
+      int smallerToIndex = smaller[i];
+      int helperI = start;
+      for (int ai = smallerFromIndex; ai < smallerToIndex; ai++) {
+        a[ai] = helperArray[helperI++];
+      }
+      printf("a after filling in smaller\n");
+      printArray(a, n);
 
-    if (start <= pivotIndex && pivotIndex <= end) {
-      helperI++;
-    }
-
-    //offset 1 everywhere because of pivot
-    int largerFromIndex = i == 0 ? smaller[threads-1]+1 : smaller[threads-1]+1+larger[i-1];
-    int largerToIndex = smaller[threads-1]+1+larger[i];
-    for (int ai = largerFromIndex; ai < largerToIndex; ai++) {
-      a[ai] = helperArray[helperI++];
-    }
-    printf("a after filling in larger\n");
-    printArray(a, n);
+      //offset 1 everywhere because of pivot
+      int largerFromIndex = i == 0 ? smaller[threads-1]+1 : smaller[threads-1]+1+larger[i-1];
+      int largerToIndex = smaller[threads-1]+1+larger[i];
+      for (int ai = largerFromIndex; ai < largerToIndex; ai++) {
+        a[ai] = helperArray[helperI++];
+      }
+      printf("a after filling in larger\n");
+      printArray(a, n);
     }
   }
+  //pivotIndex should always be 0 here
   a[smaller[maxThreads-1]] = pivotValue;
+
   printf("smaller[maxThreads-1]: %i\n", smaller[maxThreads-1]);
   printf("a after filling in pivot\n");
   printArray(a, n);
