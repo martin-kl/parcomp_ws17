@@ -3,10 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <time.h>
 
 #include <omp.h>
-#include "generator.h"
 
 
 int randomNumberBetween(int low, int high) {
@@ -40,7 +38,7 @@ void quicksort(int a[], int n, int maxThreads)
   int pivotValue = a[pivotIndex];
   int smaller[maxThreads];
   int larger[maxThreads];
-  int * helperArray = malloc(sizeof(int) * n);
+  int helperArray[n];
   #pragma omp parallel
   {
     int threads = omp_get_num_threads();
@@ -59,17 +57,7 @@ void quicksort(int a[], int n, int maxThreads)
     //call partition
     smaller[i] = partition(a, start, end, pivotIndex);
     larger[i] = end - start - smaller[i] - 1;
-    #pragma omp critical
-    {
-    printf("start = %i, end = %i\n", start, end);
-    printf("smaller[i] = %i, larger[i] = %i\n", smaller[i], larger[i]);
-    if (start <= pivotIndex && pivotIndex <= end) {
-      assert((smaller[i] + larger[i] + 1) == (end-start));
-    } else {
-      assert((smaller[i] + larger[i]) == (end-start));
-    }
-    }
-
+    assert((smaller[i] + larger[i] + 1) == (start + end));
     #pragma omp barrier
     #pragma omp single
     {
@@ -78,7 +66,7 @@ void quicksort(int a[], int n, int maxThreads)
         larger[k] += larger[k-1];
       }
     }
-    // Write results to global array
+    //smaller[i-1] -> smaller[i]  befüllen mit werten von start ->
     int smallerFromIndex = i == 0 ? 0 : smaller[i-1];
     int smallerToIndex = smaller[i];
     for (int ai = smallerFromIndex; ai < smallerToIndex; ai++) {
@@ -92,11 +80,9 @@ void quicksort(int a[], int n, int maxThreads)
       helperArray[ai] = a[ai];
     }
   }
-  helperArray[smaller[maxThreads-1]] = pivotValue;
-  free(a);
-  a = helperArray;
-  quicksort(a, smaller[maxThreads-1], maxThreads);
-  quicksort(a+smaller[maxThreads-1]+1, larger[maxThreads-1], maxThreads);
+  helperArray[smaller[threads-1]] = pivotValue;
+  quicksort(helperArray, smaller[threads-1]-1, maxThreads);
+  quicksort(helperArray+smaller[threads-1]+1, larger[threads-1], maxThreads);
 }
 
 #define MICRO 1000000.0
@@ -115,7 +101,7 @@ int main(int argc, char *argv[])
   s = 0;
   n = 1;
   seed = 0;
-  threads = 1;
+  threads = 0;
   for (i=1; i<argc&&argv[i][0]=='-'; i++) {
     if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
     if (argv[i][1]=='s') i++,sscanf(argv[i],"%d",&s); //type of array
