@@ -1,4 +1,4 @@
-CC = gcc-7
+CC = gcc
 CFLAGS = -Wall -g -std=c99 $(DEFS)
 
 #OBJECTFILES = client.o server.o
@@ -36,4 +36,4 @@ openmp:
 
 
 clean:
-	rm -f sqsort.o cqsort.o generator.o main.o main cqmain.o cilkMain testscan.o testscan
+	rm -f sqsort.o cqsort.o generator.o main.o main cqmain.o cilkMain testscan.o testscan oqs 

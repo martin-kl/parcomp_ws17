@@ -49,9 +49,8 @@ void quicksort(int a[], int n, int maxThreads, int unit)
   int pivotIndex = randomNumberBetween(0, n-1);
   int pivotValue = a[pivotIndex];
   //switch pivot to first element
-  int aa = a[pivotIndex];
   a[pivotIndex] = a[0];
-  a[0] = aa;
+  a[0] = pivotValue;
   pivotIndex = 0;
 
   int smaller[maxThreads];
@@ -73,6 +72,7 @@ void quicksort(int a[], int n, int maxThreads, int unit)
     //call _partition
     struct partitionResult result;
     _partition(a, start, end, &result, pivotValue);
+
     memcpy(helperArray+start, a+start, (sizeof(int) * (end-start+1)));
 
     smaller[i] = result.smaller;
@@ -119,12 +119,35 @@ void quicksort(int a[], int n, int maxThreads, int unit)
 
 #define MICRO 1000000.0
 
+void generateArray(int *a, int s, int n, unsigned seed) {
+  //generate array a:
+  if (s==0) {
+    a = generateIntPeriodicNumbers(n);
+  } else if (s==1) {
+    a = generateIntSameNumbers(n, 27);
+  }else if (s==2) {
+    a = generateIntAscendingNumbers(n);
+  }else if (s==3) {
+    a = generateIntDescendingNumbers(n);
+  } else if (s == 4) {
+    if(seed != 0)
+      a = generateIntRandomNumbersWithSeed(n, 0, 100, seed);
+    else 
+      a = generateIntRandomNumbers(n, 0, 100);
+  }else {
+    printf("invalid input for type, only 0-4 is valid\n");
+    exit(0);
+  }
+}
+
+
 int main(int argc, char *argv[])
 {
   int i, n;
   int *a; int s; // sequence type 0, 1, ...
 
   int threads;
+  int CALLS = 10;
 
   unsigned seed = 0;
 
@@ -142,43 +165,41 @@ int main(int argc, char *argv[])
   }
 
   a = (int*)malloc(n*sizeof(int));
+  generateArray(a, s, n, seed);
+  printf("start sequential algorithm for comparison...\n");
+  double startSeq, endSeq;
+  startSeq = omp_get_wtime();
+  //call sequential algorithm
+  seqQuickSort(a, 0, n-1);
+  endSeq = omp_get_wtime();
+  printf("time for sequential algorithm: %.5f\n", (endSeq-startSeq));
+  printf("\n");
 
   if (threads > 0) {
     if (threads > omp_get_max_threads()) threads = omp_get_max_threads();
     omp_set_num_threads(threads);
   }
 
-  if (s==0) {
-    //for (i=0; i<n; i++) a[i] = (100-i)%27;
-    a = generateIntPeriodicNumbers(n);
-  } else if (s==1) {
-    //for (i=0; i<n; i++) a[i] = 27; // worst-case input
-    a = generateIntSameNumbers(n, 27);
-  }else if (s==2) {
-    a = generateIntAscendingNumbers(n);
-  }else if (s==3) {
-    a = generateIntDescendingNumbers(n);
-  } else if (s == 4) {
-    //srand(seed);
-    //for (i=0; i<n; i++) a[i] = rand()%n;
-    if(seed != 0)
-      a = generateIntRandomNumbersWithSeed(n, 0, 100, seed);
-    else 
-      a = generateIntRandomNumbers(n, 0, 100);
-  }else {
-    printf("invalid input for type, only 0-4 is valid\n");
-    return 0;
-  }
 
-  start = omp_get_wtime();
-  quicksort(a,n, threads, 1000);
-  stop = omp_get_wtime();
+  double durations[CALLS];
+  for(int i = 0; i < CALLS; i++) {
+    generateArray(a, s, n, seed);
+    //call parallel algorithm
+    start = omp_get_wtime();
+    quicksort(a, n, threads, 1000);
+    stop = omp_get_wtime();
+    durations[i] = stop-start;
+  }
 
   //pintArray(a, n);
   // verify
   for (i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
 
-  printf("Sorting time %.2f\n",(stop-start));
+  //printf("Sorting time %.2f\n",(stop-start));
+  printf("sorting times:\n");
+  for (int i = 0; i < CALLS; i++) {
+    printf(" > %f\n", durations[i]);
+  }
   //printf("Sorting time %.2f\n",(stop-start)*MICRO);
 
   free(a);

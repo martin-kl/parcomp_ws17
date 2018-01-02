@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
   //verify result:
   for (int i = 0; i < n-1; i++) assert(array[i] <= array[i+1]);
 
-  printf("Sorting time for sequential algorithm: %lld\n", stopSeq-startSeq);
+  printf("Sorting time for sequential algorithm: %.5fs\n", (((double)(stopSeq-startSeq))/1000000));
 
   //
   //now start parallel algorithm and meassure time too
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
   //verify result:
   for (int i = 0; i < n-1; i++) assert(array2[i] <= array2[i+1]);
 
-  printf("Sorting time for parallel algorithm: %lld\n", stopPar-startPar);
+  printf("Sorting time for parallel algorithm: %.5fs\n", (((double)(stopPar-startPar))/1000000));
 
   free(array);
   free(array2);
