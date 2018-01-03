@@ -7,7 +7,7 @@ CFLAGS = -Wall -g -std=c99 $(DEFS)
 
 all: main
 
-main: generator.o main.o quicksortC.o quicksortS.o quicksortO.o
+main: generator.o main.o quicksortC.o quicksortS.o quicksortO.o shared.o
 	$(CC) -fcilkplus -fopenmp -Wall -o $@ -O3 $^
 
 quicksortC.o: quicksortC.c

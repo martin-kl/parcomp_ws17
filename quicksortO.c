@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <time.h>
 #include <string.h>
 #include <omp.h>
 
@@ -13,13 +12,6 @@
 
 #define UNIT (1000)
 
-struct partitionResult {
-  int smaller;
-  int larger;
-};
-
-//Method Declaration
-void _partition(int a[], int start, int end, struct partitionResult * result, int pivotValue);
 
 
 // --- --- --- --- ---- --- --- ---
@@ -59,9 +51,8 @@ void quicksortO(int a[], int n, int maxThreads)
     //if i is last thread and n%threads != 0 the end for the last thread is n
     end = i == threads-1 ? n-1 : (i+1) * nPThreads -1;
 
-    //call _partition
     struct partitionResult result;
-    _partition(a, start, end, &result, pivotValue);
+    partition(a, start, end, &result, pivotValue);
 
     memcpy(helperArray+start, a+start, (sizeof(int) * (end-start+1)));
 
@@ -106,24 +97,3 @@ void quicksortO(int a[], int n, int maxThreads)
     }
   }
 }
-
-
-
-
-void _partition(int a[], int start, int end, struct partitionResult * result, int pivotValue) {
-  //precond: pivot is outside of range: start - end
-  int aa, i, j;
-  i = start-1; j = end+1;
-
-  for (;;) {
-    while (++i<j&&a[i] < pivotValue); // has one advantage
-    while (a[--j] > pivotValue && j>=start);
-    if (i>=j) break;
-    aa = a[i]; a[i] = a[j]; a[j] = aa;
-  }
-
-  result->smaller = j-start+1;
-  result->larger = ((end - start) + 1) - result->smaller;
-
-}
-
