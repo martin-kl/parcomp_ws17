@@ -4,7 +4,7 @@
 
 #include "generator.h"
 #include "sorts.h"
-#include "timeFunction.h"
+#include "shared.h"
 
 
 void generateArray(int *a, int s, int n, unsigned seed) {
@@ -51,8 +51,10 @@ int main(int argc, char *argv[]) {
     if (argv[i][1]=='a') {
       i++;
       if (*argv[i] == 'o') {
+        printf("Using OpenMP.\n");
         implementation = &quicksortO;
       } else if (*argv[i] == 'c') {
+        printf("Using Cilk.\n");
         implementation = &quicksortC;
       } else if (*argv[i] == 'm') {
         printf("Not yet implemented. Exiting.\n");
@@ -65,7 +67,22 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
+  printf("Executing with: -n %i -s %i -t %i -S %i -c %i\n", n, s, threads, seed, calls);
+
   int * a = (int*)malloc(n*sizeof(int));
+
+
+
+  printf("sorting times with parallel algorithm:\n");
+  for(int i = 0; i < calls; i++) {
+    generateArray(a, s, n, seed);
+    start = mytime();
+    implementation(a, n, threads);
+    stop = mytime();
+    assertSorted(a, n);
+    printf(" > %f\n", stop-start);
+  }
+
   generateArray(a, s, n, seed);
 
   //call sequential algorithm
@@ -76,18 +93,6 @@ int main(int argc, char *argv[]) {
   stop = mytime();
   printf("time for sequential algorithm: %.5f\n", (stop-start));
   printf("\n");
-
-
-
-  printf("sorting times with parallel algorithm using openmp:\n");
-  for(int i = 0; i < calls; i++) {
-    generateArray(a, s, n, seed);
-    start = mytime();
-    implementation(a, n, threads);
-    stop = mytime();
-    assertSorted(a, n);
-    printf(" > %f\n", stop-start);
-  }
 
   free(a);
   return 0;

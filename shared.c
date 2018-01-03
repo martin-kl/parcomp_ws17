@@ -1,9 +1,13 @@
 #include "shared.h"
 #include <stdlib.h>
-#include <time.h>
+#include <sys/time.h>
 
+int initializedGenerator = 0;
 int randomNumberBetween(int low, int high) {
-  srand((unsigned)time(NULL));
+  if (initializedGenerator == 0) {
+    srand((unsigned)mytime());
+    initializedGenerator = 1;
+  }
   double drandom = ((double)rand()) / ((double)RAND_MAX);
   return drandom * (high-low) + low;
 }
@@ -28,3 +32,11 @@ void partition(int a[], int start, int end, struct partitionResult * result, int
   result->larger = ((end - start) + 1) - result->smaller;
 }
 
+
+typedef unsigned long long usecs;
+
+double mytime() {
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    return ((double)((usecs)now.tv_usec + (usecs)now.tv_sec*1000000.0))/1000000.0;
+}

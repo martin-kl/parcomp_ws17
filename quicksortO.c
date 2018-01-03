@@ -13,13 +13,63 @@
 #define UNIT (1000)
 
 
+void quicksortOImpl(int a[], int n, int maxThreads);
 
 // --- --- --- --- ---- --- --- ---
 // Method Implementation
 // --- --- --- --- ---- --- --- ---
+//
+void quicksortOImpl2(int a[], int n, int maxThreads);
+
+void quicksortO(int a[], int n, int threads) {
+  if (threads > 0) {
+    if (threads > omp_get_max_threads()) threads = omp_get_max_threads();
+    omp_set_num_threads(threads);
+  }
+  quicksortOImpl(a, n, threads);
+}
+
+void quicksortOImpl(int a[], int n, int maxThreads) {
+  if (n <= UNIT) {
+    quicksortS(a, 0, n-1);
+    return;
+  }
+  int low = 0;
+  int high = n-1;
+  if (low < high) {
+    /* pi is partitioning index, arr[p] is now
+       at right place */
+
+    int pivotIndex = randomNumberBetween(low, high);
+    int pivotValue = a[pivotIndex];
+    //switch pivot to first element
+    a[pivotIndex] = a[low];
+    a[low] = pivotValue;
 
 
-void quicksortO(int a[], int n, int maxThreads)
+    struct partitionResult result;
+    partition(a, low+1, high, &result, pivotValue);
+    int pi = low+result.smaller;
+    int aa = a[low]; a[low] = a[pi]; a[pi] = aa;
+
+    #pragma omp parallel
+    #pragma omp for
+    for(int k = 0; k < 2; k++) {
+    printf("threads: %i\n", omp_get_num_threads());
+      if(k == 0) {
+         //printf("starting first %i\n", n);
+        quicksortOImpl(a, pi, maxThreads);
+         //printf("ending first %i\n", n);
+      }else {
+         //printf("starting second %i\n", n);
+        quicksortOImpl(a+pi+1, n-pi-1, maxThreads);
+         //printf("ending second %i\n", n);
+      }
+    }
+  }
+}
+
+void quicksortOImpl2(int a[], int n, int maxThreads)
 {
   if (n <= UNIT) {
     quicksortS(a, 0, n-1);
@@ -38,7 +88,7 @@ void quicksortO(int a[], int n, int maxThreads)
   int larger[maxThreads];
   int * helperArray = malloc(sizeof(int) * n);
   int actualThreads = maxThreads;
-  #pragma omp parallel
+#pragma omp parallel
   {
     int threads = omp_get_num_threads();
     actualThreads = threads;
@@ -61,8 +111,8 @@ void quicksortO(int a[], int n, int maxThreads)
 
     assert((smaller[i] + larger[i]) == (end-start+1));
 
-    #pragma omp barrier
-    #pragma omp single
+#pragma omp barrier
+#pragma omp single
     {
       for (int k = 1; k < threads; k++) {
         smaller[k] += smaller[k-1];
@@ -88,12 +138,17 @@ void quicksortO(int a[], int n, int maxThreads)
   a[smaller[actualThreads-1]] = pivotValue;
 
   free(helperArray);
+
 #pragma omp parallel for
   for(int k = 0; k < 2; k++) {
     if(k == 0) {
-      quicksortO(a, smaller[actualThreads-1], actualThreads);
+      if (n == 20000000) { printf("starting first\n"); }
+      quicksortOImpl2(a, smaller[actualThreads-1], actualThreads);
+      if (n == 20000000) { printf("ending first\n"); }
     }else {
-      quicksortO(a+smaller[actualThreads-1]+1, larger[actualThreads-1], actualThreads);
+      if (n == 20000000) { printf("starting second\n"); }
+      quicksortOImpl2(a+smaller[actualThreads-1]+1, larger[actualThreads-1], actualThreads);
+      if (n == 20000000) { printf("ending second\n"); }
     }
   }
 }

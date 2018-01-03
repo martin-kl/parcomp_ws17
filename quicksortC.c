@@ -22,8 +22,7 @@ void quicksortC(int a[], int n, int maxThreads ) {
   quicksort(a, n);
 }
 
-void quicksort(int a[], int n)
-{
+void quicksort(int a[], int n) {
   //if we have just 1 element left return because there is nothing to do
   if (n < 2) return;
 
@@ -53,12 +52,19 @@ void quicksort(int a[], int n)
     a[j] = aa;
   }
   // swap pivot
+
+  /*struct partitionResult result;
+
+  partition(a, low+1, high, &result, pivotValue);
+  int pi = low+result.smaller;
+  aa = a[low]; a[low] = a[pi]; a[pi] = aa;*/
+
   aa = a[0]; a[0] = a[j]; a[j] = aa;
 
   //spawn recursive cilk threads
   //printf("call quicksort recursive with first element in a=%i, j=%i, unit=%i\n", a[0], j, unit);
   cilk_spawn quicksort(a, j);
-  
+
   //printf("call quicksort recursive with a=%i, j=%i, unit=%i\n", a[j+1], n-j-1, unit);
   cilk_spawn quicksort(a+j+1, n-j-1);
 
