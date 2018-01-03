@@ -123,18 +123,18 @@ void quicksort(int a[], int n, int maxThreads, int unit)
 void generateArray(int *a, int s, int n, unsigned seed) {
   //generate array a:
   if (s==0) {
-    a = generateIntPeriodicNumbers(n);
+    generateIntPeriodicNumbers(a, n);
   } else if (s==1) {
-    a = generateIntSameNumbers(n, 27);
+    generateIntSameNumbers(a, n, 27);
   }else if (s==2) {
-    a = generateIntAscendingNumbers(n);
+    generateIntAscendingNumbers(a, n);
   }else if (s==3) {
-    a = generateIntDescendingNumbers(n);
+    generateIntDescendingNumbers(a, n);
   } else if (s == 4) {
     if(seed != 0)
-      a = generateIntRandomNumbersWithSeed(n, 0, 100, seed);
+      generateIntRandomNumbersWithSeed(a, n, 0, 100, seed);
     else
-      a = generateIntRandomNumbers(n, 0, 100);
+      generateIntRandomNumbers(a, n, 0, 100);
   }else {
     printf("invalid input for type, only 0-4 is valid\n");
     exit(0);
@@ -173,6 +173,9 @@ int main(int argc, char *argv[])
   //call sequential algorithm
   seqQuickSort(a, 0, n-1);
   endSeq = omp_get_wtime();
+
+  for (i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
+
   printf("time for sequential algorithm: %.5f\n", (endSeq-startSeq));
   printf("\n");
 

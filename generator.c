@@ -4,63 +4,51 @@
 #include <time.h>
 #include "generator.h"
 
-int* generateIntSameNumbers(int size, int numberToGenerate){
-  int* result = (int *)malloc(sizeof(int) * size);
+void generateIntSameNumbers(int *a, int size, int numberToGenerate){
 	for(int i = 0; i < size; i++) {
-		result[i] = numberToGenerate;
+		a[i] = numberToGenerate;
 	}
-	return result;
 }
 
-int* generateIntAscendingNumbers(int size) {
-    int* result = (int *)malloc(sizeof(int) * size);
+void generateIntAscendingNumbers(int *a, int size) {
 	for(int i = 0; i < size; i++) {
-		result[i] = i+1;
+		a[i] = i+1;
 	}
-	return result;
 }
 
-int* generateIntDescendingNumbers(int size) {
-    int* result = (int *)malloc(sizeof(int) * size);
-    int number = size;
+void generateIntDescendingNumbers(int *a, int size) {
+  int number = size;
 	for(int i = 0; i < size; i++) {
-		result[i] = number;
-        number--;
+		a[i] = number;
+      number--;
 	}
-	return result;
 }
 
-int* generateIntPeriodicNumbers(int size) {
-    int* result = (int *)malloc(sizeof(int) * size);
+void generateIntPeriodicNumbers(int *a, int size) {
 	for(int i = 0; i < size; i++) {
-		result[i] = (100-i)%27;
+		a[i] = (100-i)%27;
 	}
-	return result;
 }
 
-int* generateIntRandomNumbers(int size, int minNumber, int maxNumber) {
-    int difference = maxNumber - minNumber;
-    int* result = (int *)malloc(sizeof(int) * size);
-    srand((unsigned)time(NULL));
+void generateIntRandomNumbers(int *a, int size, int minNumber, int maxNumber) {
+  int difference = maxNumber - minNumber;
+  srand((unsigned)time(NULL));
 	for(int i = 0; i < size; i++) {
-            int random = rand();
-            random = random % difference;
-            random += minNumber;
-            result[i] = random;
+    int random = rand();
+    random = random % difference;
+    random += minNumber;
+    a[i] = random;
 	}
-	return result;
 }
-int* generateIntRandomNumbersWithSeed(int size, int minNumber, int maxNumber, unsigned seed) {
-    int difference = maxNumber - minNumber;
-    int* result = (int *)malloc(sizeof(int) * size);
-    srand(seed);
+void generateIntRandomNumbersWithSeed(int *a, int size, int minNumber, int maxNumber, unsigned seed) {
+  int difference = maxNumber - minNumber;
+  srand(seed);
 	for(int i = 0; i < size; i++) {
-            int random = rand();
-            random = random % difference;
-            random += minNumber;
-            result[i] = random;
+    int random = rand();
+    random = random % difference;
+    random += minNumber;
+    a[i] = random;
 	}
-	return result;
 }
 
 

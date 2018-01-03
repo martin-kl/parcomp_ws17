@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) {
     }
   }
   */
+  printArray(array, n);
 
   /*
   printf("generated array: ");
@@ -87,6 +88,7 @@ int main(int argc, char *argv[]) {
   startSeq = mytime();
   seqQuickSort(array, 0, n-1);
   stopSeq = mytime();
+  printArray(array,n);
   /*
   printf("sorted array: ");
   printArray(array, n);

@@ -1,5 +1,5 @@
 //serial qsort implementation for reference:
-//from: geeksforgeeks.org
+//partly from: geeksforgeeks.org
 
 #include "sqsort.h"
 #include <time.h>
@@ -37,8 +37,8 @@ void seqQuickSort(int arr[], int low, int high) {
     int pivotIndex = randomNumberBetween2(low, high);
     int pivotValue = arr[pivotIndex];
     //switch pivot to first element
-    arr[pivotIndex] = arr[0];
-    arr[0] = pivotValue;
+    arr[pivotIndex] = arr[low];
+    arr[low] = pivotValue;
 
 
     int pi = partition(arr, low+1, high, pivotValue);
@@ -60,7 +60,7 @@ int partition (int a[], int start, int end, int pivotValue) {
     if (i>=j) break;
     aa = a[i]; a[i] = a[j]; a[j] = aa;
   }
-  aa = a[0]; a[0] = a[j]; a[j] = aa;
+  aa = a[start-1]; a[start-1] = a[j]; a[j] = aa;
   return j;
 }
 
