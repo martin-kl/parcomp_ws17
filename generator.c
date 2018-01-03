@@ -52,8 +52,17 @@ void generateIntRandomNumbersWithSeed(int *a, int size, int minNumber, int maxNu
 }
 
 
+void printArray(int arr[], int size) {
+  printf("[");
+  int i;
+  for (i=0; i < size-1; i++)
+    printf("%d ", arr[i]);
+  printf("%d]\n", arr[size-1]);
+}
 
 
+//all methods again for double - but ATTENTION: they still have a malloc in there!
+/*
 double* generateDoubleSameNumbers(int size) {
     double* result = (double *)malloc(sizeof(double) * size);
 	for(int i = 0; i < size; i++) {
@@ -100,11 +109,5 @@ double* generateDoubleRandomNumbers(int size, double minNumber, double maxNumber
 	}
 	return result;
 }
+*/
 
-void printArray(int arr[], int size) {
-  printf("[");
-  int i;
-  for (i=0; i < size-1; i++)
-    printf("%d ", arr[i]);
-  printf("%d]\n", arr[size-1]);
-}

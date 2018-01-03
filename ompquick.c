@@ -5,43 +5,32 @@
 #include <assert.h>
 #include <time.h>
 #include <string.h>
-#include "sqsort.h"
-
 #include <omp.h>
+
+#include "sorts.h"
 #include "generator.h"
+
+#define UNIT (1000)
 
 struct partitionResult {
   int smaller;
   int larger;
 };
 
-int randomNumberBetween(int low, int high) {
-  srand((unsigned)time(NULL));
-  double drandom = ((double)rand()) / ((double)RAND_MAX);
-  return drandom * (high-low) + low;
-}
+//Method Declaration
+int randomNumberBetween(int low, int high);
+void _partition(int a[], int start, int end, struct partitionResult * result, int pivotValue);
 
-void _partition(int a[], int start, int end, struct partitionResult * result, int pivotValue) {
-  //precond: pivot is outside of range: start - end
-  int aa, i, j;
-  i = start-1; j = end+1;
 
-  for (;;) {
-    while (++i<j&&a[i] < pivotValue); // has one advantage
-    while (a[--j] > pivotValue && j>=start);
-    if (i>=j) break;
-    aa = a[i]; a[i] = a[j]; a[j] = aa;
-  }
+// --- --- --- --- ---- --- --- ---
+// Method Implementation
+// --- --- --- --- ---- --- --- ---
 
-  result->smaller = j-start+1;
-  result->larger = ((end - start) + 1) - result->smaller;
 
-}
-
-void quicksort(int a[], int n, int maxThreads, int unit)
+void quicksortO(int a[], int n, int maxThreads)
 {
-  if (n <= unit) {
-    seqQuickSort(a, 0, n-1);
+  if (n <= UNIT) {
+    quicksortS(a, 0, n-1);
     return;
   }
 
@@ -111,12 +100,42 @@ void quicksort(int a[], int n, int maxThreads, int unit)
 #pragma omp parallel for
   for(int k = 0; k < 2; k++) {
     if(k == 0) {
-      quicksort(a, smaller[actualThreads-1], actualThreads, unit);
+      quicksortO(a, smaller[actualThreads-1], actualThreads);
     }else {
-      quicksort(a+smaller[actualThreads-1]+1, larger[actualThreads-1], actualThreads, unit);
+      quicksortO(a+smaller[actualThreads-1]+1, larger[actualThreads-1], actualThreads);
     }
   }
 }
+
+
+int randomNumberBetween(int low, int high) {
+  srand((unsigned)time(NULL));
+  double drandom = ((double)rand()) / ((double)RAND_MAX);
+  return drandom * (high-low) + low;
+}
+
+void _partition(int a[], int start, int end, struct partitionResult * result, int pivotValue) {
+  //precond: pivot is outside of range: start - end
+  int aa, i, j;
+  i = start-1; j = end+1;
+
+  for (;;) {
+    while (++i<j&&a[i] < pivotValue); // has one advantage
+    while (a[--j] > pivotValue && j>=start);
+    if (i>=j) break;
+    aa = a[i]; a[i] = a[j]; a[j] = aa;
+  }
+
+  result->smaller = j-start+1;
+  result->larger = ((end - start) + 1) - result->smaller;
+
+}
+
+
+
+
+
+
 
 #define MICRO 1000000.0
 
@@ -171,7 +190,7 @@ int main(int argc, char *argv[])
   double startSeq, endSeq;
   startSeq = omp_get_wtime();
   //call sequential algorithm
-  seqQuickSort(a, 0, n-1);
+  quicksortS(a, 0, n-1);
   endSeq = omp_get_wtime();
 
   for (i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
@@ -190,7 +209,7 @@ int main(int argc, char *argv[])
     generateArray(a, s, n, seed);
     //call parallel algorithm
     start = omp_get_wtime();
-    quicksort(a, n, threads, 1000);
+    quicksortO(a, n, threads);
     stop = omp_get_wtime();
     durations[i] = stop-start;
   }

@@ -1,5 +1,4 @@
-#include "cqsort.h"
-#include "sqsort.h"
+#include "sorts.h"
 
 #ifdef SEQUENTIAL
 #define cilk_spawn
@@ -10,18 +9,30 @@
 #include <cilk/cilk_api.h>
 #endif
 
+#define UNIT (1000)
 
-void cilkQuickSort(int a[], int n, int unit)
+void quicksort(int a[], int n);
+
+// --- --- ---- ---- ---- ---- ---- ---
+// Implementation
+// --- --- ---- ---- ---- ---- ---- ---
+
+//maxThreads is not needed here, is just for omp implementation!
+void quicksortC(int a[], int n, int maxThreads ) {
+  quicksort(a, n);
+}
+
+void quicksort(int a[], int n)
 {
   //if we have just 1 element left return because there is nothing to do
   if (n < 2) return;
 
   //if we are lover than unit start sequential sort
-  if(n <= unit) {
-      //INFO: printf not working with optimization flag -O3
-      //printf("switching to sequential qsort because we are at n=%i which is lower than unit=%i\n", n, unit);
-      seqQuickSort(a, 0, n-1);
-      return;
+  if(n <= UNIT) {
+    //INFO: printf not working with optimization flag -O3
+    //printf("switching to sequential qsort because we are at n=%i which is lower than unit=%i\n", n, unit);
+    quicksortS(a, 0, n-1);
+    return;
   }
 
   int i, j;
@@ -46,10 +57,10 @@ void cilkQuickSort(int a[], int n, int unit)
 
   //spawn recursive cilk threads
   //printf("call quicksort recursive with first element in a=%i, j=%i, unit=%i\n", a[0], j, unit);
-  cilk_spawn cilkQuickSort(a, j, unit);
+  cilk_spawn quicksort(a, j);
   
   //printf("call quicksort recursive with a=%i, j=%i, unit=%i\n", a[j+1], n-j-1, unit);
-  cilk_spawn cilkQuickSort(a+j+1, n-j-1, unit);
+  cilk_spawn quicksort(a+j+1, n-j-1);
 
   cilk_sync;
 }

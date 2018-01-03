@@ -8,9 +8,8 @@
 #include <assert.h>
 #include <time.h>
 #include <string.h>
-#include "sqsort.h"
 
-#include <omp.h>
+#include "sorts.h"
 #include "generator.h"
 
 /* This function takes last element as pivot, places
@@ -18,18 +17,20 @@
 	array, and places all smaller (smaller than pivot)
 	to left of pivot and all greater elements to right of pivot */
 int partition (int a[], int start, int end, int pivotValue);
+
 // A utility function to swap two elements
 void swap(int* a, int* b);
 
-int randomNumberBetween2(int low, int high) {
-  srand((unsigned)time(NULL));
-  double drandom = ((double)rand()) / ((double)RAND_MAX);
-  return drandom * (high-low) + low;
-}
+// A function that returns a number between low and high
+int randomNumberBetween2(int low, int high);
 
 
+// --- --- --- --- --- --- --- --- ---
+// Method Implementation
+// --- --- --- --- --- --- --- --- ---
 
-void seqQuickSort(int arr[], int low, int high) {
+
+void quicksortS(int arr[], int low, int high) {
   if (low < high) {
     /* pi is partitioning index, arr[p] is now
        at right place */
@@ -45,9 +46,15 @@ void seqQuickSort(int arr[], int low, int high) {
 
     // Separately sort elements before
     // partition and after partition
-    seqQuickSort(arr, low, pi - 1);
-    seqQuickSort(arr, pi + 1, high);
+    quicksortS(arr, low, pi - 1);
+    quicksortS(arr, pi + 1, high);
   }
+}
+
+int randomNumberBetween2(int low, int high) {
+  srand((unsigned)time(NULL));
+  double drandom = ((double)rand()) / ((double)RAND_MAX);
+  return drandom * (high-low) + low;
 }
 
 int partition (int a[], int start, int end, int pivotValue) {

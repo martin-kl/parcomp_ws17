@@ -10,8 +10,7 @@
 
 #include <sys/time.h>
 
-#include "cqsort.h"
-//#include "sqsort.h"
+#include "sorts.h"
 #include "timeFunction.h"
 
 
@@ -24,30 +23,18 @@
 #include <cilk/cilk_api.h>
 #endif
 
-
-/*
-// a quick hack
-typedef unsigned long long usecs;
-
-usecs mytime()
-{
-  struct timeval now;
-  gettimeofday(&now, NULL);
-  return (usecs)now.tv_usec + (usecs)now.tv_sec * 1000000L;
-}
-*/
+// --- ---- ---- ---- ---- ---- ---- ---
+//Implementation:
+// --- ---- ---- ---- ---- ---- ---- ---
 
 int main(int argc, char *argv[])
 {
-  int i, n;
+  int i, n, s;  // sequence type 0, 1, ...
   int *a;
-  int s; // sequence type 0, 1, ...
+  usecs start, stop;
 
   unsigned seed;
-
   int unit = 1000;
-
-  usecs start, stop;
 
   s = 0;
   n = 100;
@@ -89,7 +76,7 @@ int main(int argc, char *argv[])
   */
 
   start = mytime();
-  cilkQuickSort(a, n, unit);
+  quicksortC(a, n, 0);
   stop = mytime();
 
   /*
