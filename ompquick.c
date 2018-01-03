@@ -44,7 +44,7 @@ void quicksort(int a[], int n, int maxThreads, int unit)
     seqQuickSort(a, 0, n-1);
     return;
   }
-  
+
   //start parallel quicksort
   int pivotIndex = randomNumberBetween(0, n-1);
   int pivotValue = a[pivotIndex];
@@ -56,10 +56,11 @@ void quicksort(int a[], int n, int maxThreads, int unit)
   int smaller[maxThreads];
   int larger[maxThreads];
   int * helperArray = malloc(sizeof(int) * n);
+  int actualThreads = maxThreads;
   #pragma omp parallel
   {
     int threads = omp_get_num_threads();
-    assert(maxThreads == threads);
+    actualThreads = threads;
     int nPThreads = n/threads;
     int i = omp_get_thread_num();
     int start, end;
@@ -104,15 +105,15 @@ void quicksort(int a[], int n, int maxThreads, int unit)
     }
   }
   //pivotIndex should always be 0 here
-  a[smaller[maxThreads-1]] = pivotValue;
+  a[smaller[actualThreads-1]] = pivotValue;
 
   free(helperArray);
-#pragma omp for nowait
-  for(int k = 0; k <= 1; k++) {
+#pragma omp parallel for
+  for(int k = 0; k < 2; k++) {
     if(k == 0) {
-      quicksort(a, smaller[maxThreads-1], maxThreads, unit);
+      quicksort(a, smaller[actualThreads-1], actualThreads, unit);
     }else {
-      quicksort(a+smaller[maxThreads-1]+1, larger[maxThreads-1], maxThreads, unit);
+      quicksort(a+smaller[actualThreads-1]+1, larger[actualThreads-1], actualThreads, unit);
     }
   }
 }
@@ -132,7 +133,7 @@ void generateArray(int *a, int s, int n, unsigned seed) {
   } else if (s == 4) {
     if(seed != 0)
       a = generateIntRandomNumbersWithSeed(n, 0, 100, seed);
-    else 
+    else
       a = generateIntRandomNumbers(n, 0, 100);
   }else {
     printf("invalid input for type, only 0-4 is valid\n");
@@ -147,7 +148,7 @@ int main(int argc, char *argv[])
   int *a; int s; // sequence type 0, 1, ...
 
   int threads;
-  int CALLS = 10;
+  int CALLS = 1;
 
   unsigned seed = 0;
 
@@ -161,7 +162,7 @@ int main(int argc, char *argv[])
     if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
     if (argv[i][1]=='s') i++,sscanf(argv[i],"%d",&s); //type of array
     if (argv[i][1]=='t') i++,sscanf(argv[i],"%d",&threads); //number of threads
-    if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed); 
+    if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed);
   }
 
   a = (int*)malloc(n*sizeof(int));
