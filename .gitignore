@@ -81,3 +81,7 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+/oqs
+*.swp
+/tmp.c
+/main
