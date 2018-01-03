@@ -1,127 +1,94 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <string.h> //for memcpy
-#include <sys/time.h>
 
 #include "generator.h"
-#include "sqsort.h"
-#include "cqsort.h"
+#include "sorts.h"
 #include "timeFunction.h"
 
-//### Implementation ###//
 
+void generateArray(int *a, int s, int n, unsigned seed) {
+  //generate array a:
+  if (s==0) {
+    generateIntPeriodicNumbers(a, n);
+  } else if (s==1) {
+    generateIntSameNumbers(a, n, 27);
+  }else if (s==2) {
+    generateIntAscendingNumbers(a, n);
+  }else if (s==3) {
+    generateIntDescendingNumbers(a, n);
+  } else if (s == 4) {
+    if(seed != 0)
+      generateIntRandomNumbersWithSeed(a, n, 0, 100, seed);
+    else
+      generateIntRandomNumbers(a, n, 0, 100);
+  }else {
+    printf("invalid input for type, only 0-4 is valid\n");
+    exit(0);
+  }
+}
+
+void assertSorted(int * a, int n) {
+  for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
+}
 
 int main(int argc, char *argv[]) {
-  //array for sequential Sort
-  int *array;
-  //array for sequential Sort
-  int *array2;
-
+  int calls = 1;
+  double start, stop;
   int s = 0;
-  //TODO datatype, but not needed
-  int datatype = 0;
-  unsigned seed = 0;;
-  int n = ARRAY_SIZE;
+  int n = 1;
+  unsigned seed = 0;
+  int threads = 1;
 
-  usecs startSeq, stopSeq;
-  usecs startPar, stopPar;
+  void (*implementation) (int*, int, int);
 
-  for(int i = 1; i < argc && argv[i][0] =='-'; i++) {
-    if (argv[i][1] == 'n') {
+  for (int i=1; i<argc&&argv[i][0]=='-'; i++) {
+    if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
+    if (argv[i][1]=='s') i++,sscanf(argv[i],"%d",&s); //type of array
+    if (argv[i][1]=='t') i++,sscanf(argv[i],"%d",&threads); //number of threads
+    if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed);
+    if (argv[i][1]=='c') i++,sscanf(argv[i],"%d",&calls);
+    if (argv[i][1]=='a') {
       i++;
-      sscanf(argv[i], "%d", &n); //number of elements
-      assert(n > 0);
-    }else if (argv[i][1] == 's') {
-      i++;
-      sscanf(argv[i], "%d", &s); //sequence type, 0=periodic, 1=same number on every position, 2=ascending, 3=descending, 4=random
-      //FIXME real value for type < xx
-      assert(s >= 0 && s < 5);
-    }else if (argv[i][1] == 'S') {
-      i++;
-      sscanf(argv[i], "%d", &seed); //seed
-    }else if(argv[i][1] == 'd') {
-      //STILL TODO - cause array of values is only int or should we add both (int and double array??)
-      i++;
-      sscanf(argv[i], "%d", &datatype); //datatype, 0 == int, 1 == double
-      assert((datatype == 0) || (datatype == 1));
-    }else {
-      printf("invalid argument, valid syntax: ./sqsort [-n xxxx] [-d x] [-t x] [-s xxx]\n");
-      return(0);
+      if (*argv[i] == 'o') {
+        implementation = &quicksortO;
+      } else if (*argv[i] == 'c') {
+        implementation = &quicksortC;
+      } else if (*argv[i] == 'm') {
+        printf("Not yet implemented. Exiting.\n");
+        //implementation = &quicksortM;
+      }
     }
   }
-  //generate array for values:
-  //TODO fix this for all datatypes
-  if(s == 0) {
-    array = generateIntPeriodicNumbers(n);
-  }else if(s == 1) {
-    array = generateIntSameNumbers(n, 27);
-  }else if(s == 2) {
-    array = generateIntAscendingNumbers(n);
-  }else if(s == 3) {
-    array = generateIntDescendingNumbers(n);
-  }else if(s == 4) {
-    if(seed == 0) array = generateIntRandomNumbers(n, 0, 1000);
-    else array = generateIntRandomNumbersWithSeed(n, 0, 1000, seed);
-  }else {
-    printf("invalid type range, 0-4 is only valid\n");
-    return 0;
-  } 
-
-  //copy array so we can sort it once sequential and once parallel
-  array2 = malloc(n * sizeof(int));
-  memcpy(array2, array, n * sizeof(int));
-  //this check memcpy works - the check below found no error
-  /*
-  for(int i = 0; i < n; i++) {
-    if(array[i] != array2[i]) {
-      printf("found error on i=%i, a[i]=%i, a2[i]=%i\n", i, array[i], array2[i]);
-    }
+  if (implementation == NULL) {
+    printf("Specify implementation via -a [o|c|m].");
+    exit(1);
   }
-  */
-  printArray(array, n);
 
-  /*
-  printf("generated array: ");
-  printArray(array, n);
-  */
-  startSeq = mytime();
-  seqQuickSort(array, 0, n-1);
-  stopSeq = mytime();
-  printArray(array,n);
-  /*
-  printf("sorted array: ");
-  printArray(array, n);
-  */
-    
-  //verify result:
-  for (int i = 0; i < n-1; i++) assert(array[i] <= array[i+1]);
+  int * a = (int*)malloc(n*sizeof(int));
+  generateArray(a, s, n, seed);
 
-  printf("Sorting time for sequential algorithm: %.5fs\n", (((double)(stopSeq-startSeq))/1000000));
+  //call sequential algorithm
+  printf("start sequential algorithm for comparison...\n");
+  start = mytime();
+  quicksortS(a, 0, n-1);
+  assertSorted(a, n);
+  stop = mytime();
+  printf("time for sequential algorithm: %.5f\n", (stop-start));
+  printf("\n");
 
-  //
-  //now start parallel algorithm and meassure time too
-  //
- 
-  /*
-  printf("generated array: ");
-  printArray(array, n);
-  */
-  startPar = mytime();
-  //with unit size = 1000
-  cilkQuickSort(array2, n, 1000);
-  stopPar = mytime();
-  /*
-  printf("sorted array: ");
-  printArray(array, n);
-  */
-      
-  //verify result:
-  for (int i = 0; i < n-1; i++) assert(array2[i] <= array2[i+1]);
 
-  printf("Sorting time for parallel algorithm: %.5fs\n", (((double)(stopPar-startPar))/1000000));
 
-  free(array);
-  free(array2);
+  printf("sorting times with parallel algorithm using openmp:\n");
+  for(int i = 0; i < calls; i++) {
+    generateArray(a, s, n, seed);
+    start = mytime();
+    implementation(a, n, threads);
+    stop = mytime();
+    assertSorted(a, n);
+    printf(" > %f\n", stop-start);
+  }
+
+  free(a);
   return 0;
 }

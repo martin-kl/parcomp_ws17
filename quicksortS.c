@@ -1,7 +1,6 @@
 //serial qsort implementation for reference:
 //partly from: geeksforgeeks.org
 
-#include "sqsort.h"
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
