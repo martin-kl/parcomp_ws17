@@ -2,16 +2,30 @@
 //from: geeksforgeeks.org
 
 #include "sqsort.h"
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <time.h>
+#include <string.h>
+#include "sqsort.h"
+
+#include <omp.h>
+#include "generator.h"
 
 /* This function takes last element as pivot, places
 	the pivot element at its correct position in sorted
 	array, and places all smaller (smaller than pivot)
-	to left of pivot and all greater elements to right
-	of pivot */
-int partition (int arr[], int low, int high);
+	to left of pivot and all greater elements to right of pivot */
+int partition (int a[], int start, int end, int pivotValue);
 // A utility function to swap two elements
 void swap(int* a, int* b);
 
+int randomNumberBetween2(int low, int high) {
+  srand((unsigned)time(NULL));
+  double drandom = ((double)rand()) / ((double)RAND_MAX);
+  return drandom * (high-low) + low;
+}
 
 
 
@@ -19,7 +33,15 @@ void seqQuickSort(int arr[], int low, int high) {
   if (low < high) {
     /* pi is partitioning index, arr[p] is now
        at right place */
-    int pi = partition(arr, low, high);
+
+    int pivotIndex = randomNumberBetween2(low, high);
+    int pivotValue = arr[pivotIndex];
+    //switch pivot to first element
+    arr[pivotIndex] = arr[0];
+    arr[0] = pivotValue;
+
+
+    int pi = partition(arr, low+1, high, pivotValue);
 
     // Separately sort elements before
     // partition and after partition
@@ -28,22 +50,20 @@ void seqQuickSort(int arr[], int low, int high) {
   }
 }
 
-int partition (int arr[], int low, int high) {
-  int pivot = arr[high];    // pivot
-  int i = (low - 1);  // Index of smaller element
+int partition (int a[], int start, int end, int pivotValue) {
+  int aa, i, j;
+  i = start-1; j = end+1;
 
-  for (int j = low; j <= high- 1; j++) {
-    // If current element is smaller than or
-    // equal to pivot
-    if (arr[j] <= pivot) {
-      i++;    // increment index of smaller element
-      swap(&arr[i], &arr[j]);
-    }
+  for (;;) {
+    while (++i<j&&a[i] < pivotValue); // has one advantage
+    while (a[--j] > pivotValue && j>=start);
+    if (i>=j) break;
+    aa = a[i]; a[i] = a[j]; a[j] = aa;
   }
-  swap(&arr[i + 1], &arr[high]);
-  return (i + 1);
+  aa = a[0]; a[0] = a[j]; a[j] = aa;
+  return j;
 }
- 
+
 void swap(int* a, int* b) {
   int t = *a;
   *a = *b;
