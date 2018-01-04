@@ -7,14 +7,17 @@ CFLAGS = -Wall -g -std=c99 $(DEFS)
 
 all: main
 
-main: generator.o main.o quicksortC.o quicksortS.o quicksortO.o shared.o
-	$(CC) -fcilkplus -fopenmp -Wall -o $@ -O3 $^
+#make for saturn - with two steps it is not working:
+main:
+	$(CC) -Wall -O3 -fcilkplus -fopenmp -o main main.c generator.c quicksortC.c quicksortO.c quicksortS.c shared.c -O3 -Wall
+#main: generator.o main.o quicksortC.o quicksortS.o quicksortO.o shared.o
+#	$(CC) -fcilkplus -fopenmp -Wall -o $@ -O3 $^
 
-quicksortC.o: quicksortC.c
-	$(CC) -Wall -O3 -fcilkplus -c -o $@ $<
+#quicksortC.o: quicksortC.c
+#	$(CC) -Wall -O3 -fcilkplus -c -o $@ $<
 
-quicksortO.o: quicksortO.c
-	$(CC) -Wall -O3 -fopenmp -c -o $@ $<
+#quicksortO.o: quicksortO.c
+#	$(CC) -Wall -O3 -fopenmp -c -o $@ $<
 
 #just for Testing:
 testscan : testscan.o generator.o

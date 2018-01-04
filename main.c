@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
   unsigned seed = 0;
   int threads = 1;
 
-  void (*implementation) (int*, int, int);
+  void (*implementation) (int*, int, int) = NULL;
 
   for (int i=1; i<argc&&argv[i][0]=='-'; i++) {
     if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
     }
   }
   if (implementation == NULL) {
-    printf("Specify implementation via -a [o|c|m].");
+    printf("Specify implementation via -a [o|c|m].\n");
     exit(1);
   }
 
