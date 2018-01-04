@@ -16,7 +16,3 @@ double* generateDoubleAscendingNumbers(int size);
 double* generateDoubleDescendingNumbers(int size);
 double* generateDoublePeriodicNumbers(int size);
 double* generateDoubleRandomNumbers(int size, double minNumber, double maxNumber);
-
-
-/* Function to print an array, second parameter is length of arrray */
-void printArray(int arr[], int n);

@@ -1,5 +1,6 @@
 #include "shared.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/time.h>
 
 int initializedGenerator = 0;
@@ -10,6 +11,14 @@ int randomNumberBetween(int low, int high) {
   }
   double drandom = ((double)rand()) / ((double)RAND_MAX);
   return drandom * (high-low) + low;
+}
+
+void printArray(int arr[], int size) {
+  printf("[");
+  int i;
+  for (i=0; i < size-1; i++)
+    printf("%d ", arr[i]);
+  printf("%d]\n", arr[size-1]);
 }
 
 /*
