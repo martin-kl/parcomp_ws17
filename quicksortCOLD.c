@@ -5,12 +5,12 @@
 #include "shared.h"
 
 #ifdef SEQUENTIAL
-#define cilk_spawn
-#define cilk_sync
+  #define cilk_spawn
+  #define cilk_sync
 #else
-// cilkplus libraries
-#include <cilk/cilk.h>
-#include <cilk/cilk_api.h>
+  // cilkplus libraries
+  #include <cilk/cilk.h>
+  #include <cilk/cilk_api.h>
 #endif
 
 #define UNIT (2)
