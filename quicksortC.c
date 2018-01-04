@@ -16,7 +16,7 @@
 #define UNIT (1000)
 
 void quicksort(int a[], int n);
-void quicksort2(int a[], int n, int firsttime);
+void quicksort2(int a[], int n);
 void _partition(int a[], int low, int high, struct partitionResult * result, int helperArray[], int pivotValue);
 void writeBack(int helperArray[],int a[], int n, int p1Smaller, int p2Smaller, int isLargerOne);
 
@@ -27,7 +27,7 @@ void writeBack(int helperArray[],int a[], int n, int p1Smaller, int p2Smaller, i
 //maxThreads is not needed here, is just for omp implementation!
 void quicksortC(int a[], int n, int maxThreads ) {
  //quicksort(a, n);
- quicksort2(a, n, 1);
+ quicksort2(a, n);
 }
 
 void quicksort(int a[], int n)
@@ -72,7 +72,7 @@ void quicksort(int a[], int n)
 // second version
 // --- --- ---- ---- ---- ---- ---- ---
 
-void quicksort2(int a[], int n, int firstTime) {
+void quicksort2(int a[], int n) {
   //printf("\nstarting quicksort with n=%i\n", n);
 
   //if we have just 1 element left return because there is nothing to do
@@ -84,8 +84,29 @@ void quicksort2(int a[], int n, int firstTime) {
     return;
   }
 
-  if(firstTime == 1) {
-    printf("first time - with more threads...\n");
+  //if there are less than 100 000 elements, jsut use 1 thread/process
+  if(n/100000 == 0) {
+    // partition with just one thread
+    int pivotIndex = randomNumberBetween(0, n-1);
+    int pivotValue = a[pivotIndex];
+    //switch pivot to first element
+    a[pivotIndex] = a[0];
+    a[0] = pivotValue;
+
+    struct partitionResult result;
+    partition(a, 1, n, &result, pivotValue);
+    int pi = result.smaller;
+    int aa;
+    aa = a[0]; a[0] = a[pi]; a[pi] = aa;
+
+    //spawn recursive cilk threads
+    cilk_spawn quicksort2(a, pi);
+    cilk_spawn quicksort2(a+pi+1, n-pi-1);
+    cilk_sync;
+
+  } else {
+    //use more than one thread
+    printf("with more threads...\n");
     int * helperArray = malloc(sizeof(int) * n);
     struct partitionResult res1;
     struct partitionResult res2;
@@ -152,31 +173,12 @@ void quicksort2(int a[], int n, int firstTime) {
     a[overallSmaller] = pivotValue;
     free(helperArray);
 
-    printf("result:\n");
-    printArray(a,n);
+    //printf("result:\n");
+    //printArray(a,n);
 
     //spawn recursive cilk threads
-    cilk_spawn quicksort2(a, overallSmaller, 0);
-    cilk_spawn quicksort2(a+overallSmaller+1, overallLarger, 0);
-    cilk_sync;
-
-  }else {
-    // partition with just one thread
-    int pivotIndex = randomNumberBetween(0, n-1);
-    int pivotValue = a[pivotIndex];
-    //switch pivot to first element
-    a[pivotIndex] = a[0];
-    a[0] = pivotValue;
-
-    struct partitionResult result;
-    partition(a, 1, n, &result, pivotValue);
-    int pi = result.smaller;
-    int aa;
-    aa = a[0]; a[0] = a[pi]; a[pi] = aa;
-
-    //spawn recursive cilk threads
-    cilk_spawn quicksort2(a, pi, 0);
-    cilk_spawn quicksort2(a+pi+1, n-pi-1, 0);
+    cilk_spawn quicksort2(a, overallSmaller);
+    cilk_spawn quicksort2(a+overallSmaller+1, overallLarger);
     cilk_sync;
   }
 }
@@ -187,7 +189,7 @@ void _partition(int a[], int low, int high, struct partitionResult * result, int
   memcpy(helperArray+low, a+low, (sizeof(int) * (high-low+1)));
 }
 
-void writeBack(int helperArray[],int a[], int n, int p1Smaller, int p2Smaller, int isLargerOne) {
+void writeBack(int helperArray[],int a[], int n, struct partitionResult * res1, struct partitionResult * res2) {
   if(isLargerOne == 0) {
     //write smaller ones:
     int ai = 0;
