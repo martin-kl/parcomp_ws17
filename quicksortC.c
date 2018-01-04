@@ -18,7 +18,7 @@
 void quicksort(int a[], int n);
 void quicksort2(int a[], int n);
 void _partition(int a[], int low, int high, struct partitionResult * result, int helperArray[], int pivotValue);
-void writeBack(int helperArray[],int a[], int n, int p1Smaller, int p2Smaller, int isLargerOne);
+void writeBack(int helperArray[], int a[], int n, struct partitionResult * res1, struct partitionResult * res2, int isSmallerOne);
 
 // --- --- ---- ---- ---- ---- ---- ---
 // Implementation
@@ -106,7 +106,7 @@ void quicksort2(int a[], int n) {
 
   } else {
     //use more than one thread
-    printf("with more threads...\n");
+    //printf("with more threads...\n");
     int * helperArray = malloc(sizeof(int) * n);
     struct partitionResult res1;
     struct partitionResult res2;
@@ -126,14 +126,11 @@ void quicksort2(int a[], int n) {
     int overallLarger = res1.larger + res2.larger;
  
     //TODO write result back...
-    /*
-    printf("1 after first write back \n");
-    cilk_spawn writeBack(helperArray, a, n, res1.smaller, res2.smaller, 0);
-    printf("2 after first write back\n");
-    cilk_spawn writeBack(helperArray, a, n, res1.smaller, res2.smaller, 1);
+    cilk_spawn writeBack(helperArray, a, n, &res1, &res2, 1);
+    cilk_spawn writeBack(helperArray, a, n, &res1, &res2, 0);
     cilk_sync;
-    */
 
+    /*
     //
     //for testing, write result back just from 1 thread:
     //
@@ -151,7 +148,8 @@ void quicksort2(int a[], int n) {
     }
 
     //increment ai to let one element for overallSmaller:
-    assert(ai == overallSmaller); //ai must be the index for the pivot here
+    //this assert was just for testing and is true
+    //assert(ai == overallSmaller); //ai must be the index for the pivot here
     //we can even write the pivot here... but we do it in the end
     //a[ai] = pivotValue;
     //increment ai to start after pivot....
@@ -168,9 +166,11 @@ void quicksort2(int a[], int n) {
       a[ai] = helperArray[i];
       ai++;
     }
+    */
 
     //write pivot on correct position
-    a[overallSmaller] = pivotValue;
+    a[res1.smaller+res2.smaller] = pivotValue;
+    //a[overallSmaller] = pivotValue;
     free(helperArray);
 
     //printf("result:\n");
@@ -189,7 +189,36 @@ void _partition(int a[], int low, int high, struct partitionResult * result, int
   memcpy(helperArray+low, a+low, (sizeof(int) * (high-low+1)));
 }
 
-void writeBack(int helperArray[],int a[], int n, struct partitionResult * res1, struct partitionResult * res2) {
+void writeBack(int helperArray[],int a[], int n, struct partitionResult * res1, struct partitionResult * res2, int isSmallerOne) {
+  if(isSmallerOne == 1) {
+    //write smaller elements
+    int ai = 0;
+    //write smaller from 1st thread...
+    for (int i = 1; i <= res1->smaller; i++) {
+      a[ai] = helperArray[i];
+      ai++;
+    }
+    //write smaller from 2nd thread...
+    for(int i = n/2+1; i < n/2+1+res2->smaller; i++) {
+      a[ai] = helperArray[i];
+      ai++;
+    }
+  }else {
+    //write second part
+    int ai = res1->smaller + res2->smaller + 1;
+    //write larger from 1st thread...
+    for(int i = res1->smaller+1; i <= n/2; i++) {
+      a[ai] = helperArray[i];
+      ai++;
+    }
+    //write larger from 2nd thread...
+    for(int i = n/2+1+res2->smaller; i < n; i++) {
+      a[ai] = helperArray[i];
+      ai++;
+    }
+  }
+/*
+      //old version:
   if(isLargerOne == 0) {
     //write smaller ones:
     int ai = 0;
@@ -216,4 +245,5 @@ void writeBack(int helperArray[],int a[], int n, struct partitionResult * res1, 
       ai++;
     }
   }
+  */
 }
