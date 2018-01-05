@@ -32,6 +32,23 @@ void assertSorted(int * a, int n) {
   for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
 }
 
+void(*getFunction(char c)) (int*, int, int) {
+  if (c == 'o') {
+    printf("using OpenMP.\n");
+    return &quicksortO;
+  } else if (c == 'c') {
+    printf("using Cilk.\n");
+    return &quicksortC;
+  } else if (c == 'C') {
+    printf("using Cilk2.\n");
+    return &quicksortC2;
+  } else if (c == 'm') {
+    printf("Not yet implemented. Exiting.\n");
+    return NULL;
+    //implementation = &quicksortM;
+  }
+}
+
 int main(int argc, char *argv[]) {
   int calls = 1;
   double start, stop;
@@ -41,6 +58,7 @@ int main(int argc, char *argv[]) {
   int threads = 1;
 
   void (*implementation) (int*, int, int) = NULL;
+  void (*compare) (int*, int, int) = NULL;
 
   for (int i=1; i<argc&&argv[i][0]=='-'; i++) {
     if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
@@ -50,16 +68,12 @@ int main(int argc, char *argv[]) {
     if (argv[i][1]=='c') i++,sscanf(argv[i],"%d",&calls);
     if (argv[i][1]=='a') {
       i++;
-      if (*argv[i] == 'o') {
-        printf("Using OpenMP.\n");
-        implementation = &quicksortO;
-      } else if (*argv[i] == 'c') {
-        printf("Using Cilk.\n");
-        implementation = &quicksortC;
-      } else if (*argv[i] == 'm') {
-        printf("Not yet implemented. Exiting.\n");
-        //implementation = &quicksortM;
-      }
+      implementation = getFunction(*argv[i]);
+    }
+    if (argv[i][1]=='A') {
+      i++;
+      printf("for comparison: ");
+      compare = getFunction(*argv[i]);
     }
   }
   if (implementation == NULL) {
@@ -87,7 +101,7 @@ int main(int argc, char *argv[]) {
   for(int i = 0; i < calls; i++) {
     generateArray(a, s, n, seed);
     start = mytime();
-    quicksort2(a, n);
+    compare(a, n, threads);
     stop = mytime();
     assertSorted(a, n);
     printf(" > %f\n", stop-start);

@@ -15,7 +15,8 @@ void quicksortO(int arr[], int n, int maxThreads);
 //Definition of cilk implementation
 void quicksortC(int arr[], int n, int maxThreads);
 
+void quicksortC2(int arr[], int n, int maxThreads);
+
 //Definition of mpi implementation
 void quicksortM(int arr[], int n, int maxThreads);
 
-void quicksort2(int arr[], int n);
