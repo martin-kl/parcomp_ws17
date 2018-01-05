@@ -26,8 +26,8 @@ void writeBack(int helperArray[], int a[], int n, struct partitionResult * res1,
 
 //maxThreads is not needed here, is just for omp implementation!
 void quicksortC(int a[], int n, int maxThreads ) {
- //quicksort(a, n);
- quicksort2(a, n);
+ quicksort(a, n);
+ //quicksort2(a, n);
 }
 
 void quicksort(int a[], int n)
@@ -52,7 +52,7 @@ void quicksort(int a[], int n)
   a[0] = pivotValue;
 
   struct partitionResult result;
-  partition(a, 1, n, &result, pivotValue);
+  partition(a, 1, n-1, &result, pivotValue);
   int pi = result.smaller;
   int aa;
   aa = a[0]; a[0] = a[pi]; a[pi] = aa;
@@ -85,7 +85,7 @@ void quicksort2(int a[], int n) {
   }
 
   //if there are less than 100 000 elements, jsut use 1 thread/process
-  if(n/100000 == 0) {
+  if(n < 10000) {
     // partition with just one thread
     int pivotIndex = randomNumberBetween(0, n-1);
     int pivotValue = a[pivotIndex];
@@ -124,7 +124,7 @@ void quicksort2(int a[], int n) {
 
     int overallSmaller = res1.smaller + res2.smaller;
     int overallLarger = res1.larger + res2.larger;
- 
+
     //TODO write result back...
     cilk_spawn writeBack(helperArray, a, n, &res1, &res2, 1);
     cilk_spawn writeBack(helperArray, a, n, &res1, &res2, 0);

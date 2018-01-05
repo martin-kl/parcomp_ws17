@@ -83,14 +83,24 @@ int main(int argc, char *argv[]) {
     printf(" > %f\n", stop-start);
   }
 
+  printf("sorting times with second parallel algorithm:\n");
+  for(int i = 0; i < calls; i++) {
+    generateArray(a, s, n, seed);
+    start = mytime();
+    quicksort2(a, n);
+    stop = mytime();
+    assertSorted(a, n);
+    printf(" > %f\n", stop-start);
+  }
+
   generateArray(a, s, n, seed);
 
   //call sequential algorithm
   printf("start sequential algorithm for comparison...\n");
   start = mytime();
   quicksortS(a, 0, n-1);
-  assertSorted(a, n);
   stop = mytime();
+  assertSorted(a, n);
   printf("time for sequential algorithm: %.5f\n", (stop-start));
   printf("\n");
 
