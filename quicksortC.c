@@ -94,7 +94,7 @@ void quicksort2(int a[], int n) {
     a[0] = pivotValue;
 
     struct partitionResult result;
-    partition(a, 1, n, &result, pivotValue);
+    partition(a, 1, n-1, &result, pivotValue);
     int pi = result.smaller;
     int aa;
     aa = a[0]; a[0] = a[pi]; a[pi] = aa;
