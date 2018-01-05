@@ -55,11 +55,11 @@ void quicksortOImpl(int a[], int n, int maxThreads) {
     #pragma omp parallel
     #pragma omp for
     for(int k = 0; k < 2; k++) {
-    printf("threads: %i\n", omp_get_num_threads());
+    //printf("threads: %i\n", omp_get_num_threads());
       if(k == 0) {
-         //printf("starting first %i\n", n);
+        //printf("starting first %i\n", n);
         quicksortOImpl(a, pi, maxThreads);
-         //printf("ending first %i\n", n);
+        //printf("ending first %i\n", n);
       }else {
          //printf("starting second %i\n", n);
         quicksortOImpl(a+pi+1, n-pi-1, maxThreads);
