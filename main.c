@@ -44,9 +44,9 @@ void(*getFunction(char c)) (int*, int, int) {
     return &quicksortC2;
   } else if (c == 'm') {
     printf("Not yet implemented. Exiting.\n");
-    return NULL;
     //implementation = &quicksortM;
   }
+  return NULL;
 }
 
 int main(int argc, char *argv[]) {
@@ -56,6 +56,8 @@ int main(int argc, char *argv[]) {
   int n = 1;
   unsigned seed = 0;
   int threads = 1;
+  char alg = 0;
+  char Alg = 0;
 
   void (*implementation) (int*, int, int) = NULL;
   void (*compare) (int*, int, int) = NULL;
@@ -69,10 +71,12 @@ int main(int argc, char *argv[]) {
     if (argv[i][1]=='a') {
       i++;
       implementation = getFunction(*argv[i]);
+      alg = *argv[i];
     }
     if (argv[i][1]=='A') {
       i++;
       printf("for comparison: ");
+      Alg = *argv[i];
       compare = getFunction(*argv[i]);
     }
   }
@@ -81,7 +85,7 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
 
-  printf("Executing with: -n %i -s %i -t %i -S %i -c %i\n", n, s, threads, seed, calls);
+  printf("Executing with: -n %i -s %i -t %i -S %i -c %i -a %c -A %c\n", n, s, threads, seed, calls, alg, Alg);
 
   int * a = (int*)malloc(n*sizeof(int));
 
@@ -97,14 +101,16 @@ int main(int argc, char *argv[]) {
     printf(" > %f\n", stop-start);
   }
 
-  printf("sorting times with second parallel algorithm:\n");
-  for(int i = 0; i < calls; i++) {
-    generateArray(a, s, n, seed);
-    start = mytime();
-    compare(a, n, threads);
-    stop = mytime();
-    assertSorted(a, n);
-    printf(" > %f\n", stop-start);
+  if (compare != NULL) {
+    printf("sorting times with second parallel algorithm:\n");
+    for(int i = 0; i < calls; i++) {
+      generateArray(a, s, n, seed);
+      start = mytime();
+      compare(a, n, threads);
+      stop = mytime();
+      assertSorted(a, n);
+      printf(" > %f\n", stop-start);
+    }
   }
 
   generateArray(a, s, n, seed);
