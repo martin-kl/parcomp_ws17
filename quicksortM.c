@@ -102,14 +102,15 @@ int main(int argc, char *argv[])
   printf("rank: %i, pivotValue: %i, \n", rank, pivotValue);
   printArray(partialArray, n/size);
 
+  int partialSize;
   if (rank%2 == 0) { //collect smaller values, send larger values
     int numSmallerFromOtherProcess;
     MPI_Sendrecv(
         &partitionResult.larger, 1, MPI_INT, rank+1, MPI_ANY_TAG,
         &numSmallerFromOtherProcess, 1, MPI_INT, rank+1, MPI_ANY_TAG,
         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    int newPartialArraySize = max(partitionResult.smaller+partitionResult.larger, partitionResult.smaller+numSmallerFromOtherProcess);
-    partialArray = (int*) realloc(partialArray, newPartialArraySize);
+    partialSize = max(partitionResult.smaller+partitionResult.larger, partitionResult.smaller+numSmallerFromOtherProcess);
+    partialArray = (int*) realloc(partialArray, partialSize);
     MPI_Sendrecv(
         partialArray+partitionResult.smaller, partitionResult.larger, MPI_INT, rank+1, MPI_ANY_TAG,
         partialArray+partitionResult.smaller, numSmallerFromOtherProcess, MPI_INT, rank+1, MPI_ANY_TAG,
@@ -120,15 +121,20 @@ int main(int argc, char *argv[])
         &partitionResult.smaller, 1, MPI_INT, rank-1, MPI_ANY_TAG,
         &numLargerFromOtherProcess, 1, MPI_INT, rank-1, MPI_ANY_TAG,
         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    int newPartialArraySize = max(partitionResult.larger+partitionResult.smaller, partitionResult.larger+numLargerFromOtherProcess);
-    partialArray = (int*) realloc(partialArray, newPartialArraySize);
+    partialSize = partitionResult.larger+numLargerFromOtherProcess;
+    int * newPartialArray = (int*) malloc(partialSize * sizeof(int));
+    //copy larger values into first positions on newPartialArray
+    memcpy(newPartialArray, partialArray, partitionResult.larger * sizeof(int));
     MPI_Sendrecv(
-        partialArray+partitionResult.larger, partitionResult.smaller, MPI_INT, rank+1, MPI_ANY_TAG,
-        partialArray+partitionResult.larger, numLargerFromOtherProcess, MPI_INT, rank+1, MPI_ANY_TAG,
+        partialArray, partitionResult.smaller, MPI_INT, rank-1, MPI_ANY_TAG,
+        newPartialArray+partitionResult.larger, numLargerFromOtherProcess, MPI_INT, rank-1, MPI_ANY_TAG,
         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
+  printf("after exchanging values, rank: %i, pivotValue: %i, \n", rank, pivotValue);
+  printArray(partialArray, n/size);
 
-  partitionResult.larger
+
+
 
  //if (rank == 0) {
   //  quicksort(a, n);
