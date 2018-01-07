@@ -9,6 +9,7 @@
 #include "shared.h"
 #include "sorts.h"
 
+void quicksort(int * partialArray, int n, MPI_Comm comm, int recursionQuotient);
 void assertSorted(int * a, int n) {
   for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
 }
@@ -57,9 +58,6 @@ int main(int argc, char *argv[])
   // get rank and size from communicator
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-  //TODO n/size must divide
-  assert((size-1 & size) == 0);
-  assert(n%size == 0);
 
   //now every processor does this - probably not that bad... (but not really needed)
   for (int i=1; i<argc&&argv[i][0]=='-'; i++) {
@@ -67,6 +65,10 @@ int main(int argc, char *argv[])
     if (argv[i][1]=='s') i++,sscanf(argv[i],"%d",&s); //type of array
     if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed);
   }
+
+  //TODO n/size must divide
+  assert((size-1 & size) == 0);
+  assert(n%size == 0);
 
   if(rank == 0) {
     //malloc array - is this working if every processor has a? (defined after main header)
@@ -86,6 +88,8 @@ int main(int argc, char *argv[])
 
   //start quicksort
   quicksort(partialArray, n/size, MPI_COMM_WORLD, size);
+  printf("rank: %i \n", rank);
+  printArray(partialArray, n/size);
 
   if(rank == 0) {
     stop = MPI_Wtime();
@@ -97,20 +101,23 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-void quicksort(int * a, int n, MPI_Comm comm, int recursionQuotient) {
-
+void quicksort(int * partialArray, int n, MPI_Comm comm, int recursionQuotient) {
   if(n < 2) return;
-  if(recursionQuotient == 0) {
+  if(recursionQuotient == 1) {
     //start sequential quicksort
-    quicksortS(a, n);
+    quicksortS(partialArray, 0, n-1);
     return;
   }
+
+  int rank,size;
+  MPI_Comm_size(comm,&size);
+  MPI_Comm_rank(comm,&rank);
 
   int pivotValue, pivotIndex;
   if (rank == 0) {
     //start = MPI_Wtime();
     pivotIndex = randomNumberBetween(0, n-1);
-    pivotValue = a[pivotIndex];
+    pivotValue = partialArray[pivotIndex];
   }
   MPI_Bcast(&pivotIndex, 1, MPI_INT, 0, comm);
   MPI_Bcast(&pivotValue, 1, MPI_INT, 0, comm);
@@ -124,7 +131,7 @@ void quicksort(int * a, int n, MPI_Comm comm, int recursionQuotient) {
   } else {
     partition(partialArray, 0, (n/size)-1, &partitionResult, pivotValue);
   }
-  printf("rank: %i, pivotValue: %i, \n", rank, pivotValue);
+  //printf("rank: %i, pivotValue: %i, \n", rank, pivotValue);
   printArray(partialArray, n/size);
 
   int partialSize;
@@ -160,7 +167,7 @@ void quicksort(int * a, int n, MPI_Comm comm, int recursionQuotient) {
         comm, MPI_STATUS_IGNORE);
   }
   free(partialArray);
-  printf("after exchanging values, rank: %i, pivotValue: %i, \n", rank, pivotValue);
+  //printf("after exchanging values, rank: %i, pivotValue: %i, \n", rank, pivotValue);
   printArray(newPartialArray, partialSize);
 
   MPI_Comm commNew;
