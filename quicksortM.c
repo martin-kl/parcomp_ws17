@@ -6,7 +6,10 @@
 // MPI header
 #include <mpi.h>
 
-#define HELLO 1234 // tag for control messages
+void assertSorted(int * a, int n) {
+  for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -14,26 +17,16 @@ int main(int argc, char *argv[])
   int prev;
   char name[MPI_MAX_PROCESSOR_NAME];
   int nlen;
+  int * a;
 
 
   MPI_Init(&argc,&argv);
 
+  //variables for quicksort:
+  double start, stop;
   int s = 0;
   int n = 1;
   unsigned seed = 0;
-
-  for (int i=1; i<argc&&argv[i][0]=='-'; i++) {
-    if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
-    if (argv[i][1]=='s') i++,sscanf(argv[i],"%d",&s); //type of array
-    if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed);
-  }
-
-  generateArray(a, s, n, seed);
-  start = mytime();
-  implementation(a, n, threads);
-  stop = mytime();
-  assertSorted(a, n);
-  printf(" > %f\n", stop-start);
 
   // get rank and size from communicator
   MPI_Comm_size(MPI_COMM_WORLD,&size);
@@ -41,6 +34,34 @@ int main(int argc, char *argv[])
 
   MPI_Get_processor_name(name,&nlen);
 
+  //now every processor does this - probably not that bad... (but not really needed)
+  for (int i=1; i<argc&&argv[i][0]=='-'; i++) {
+    if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
+    if (argv[i][1]=='s') i++,sscanf(argv[i],"%d",&s); //type of array
+    if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed);
+  }
+
+  if(rank == 0) {
+    //malloc array - is this working if every processor has a? (defined after main header)
+    a = (int*)malloc(n*sizeof(int));
+    printf("Executing with: -n %i -s %i -S %i\n", n, s, seed);
+    generateArray(a, s, n, seed);
+    start = MPI_Wtime();
+  }
+  //TODO start quicksort
+  //first step: scatter data, or even generate data scattered?
+
+
+
+
+
+  if(rank == 0) {
+    stop = MPI_Wtime();
+    assertSorted(a, n);
+    printf(" > %f\n", stop-start);
+  }
+
+  //not from us:
   if (rank==0) {
     printf("Rank %d initializing, total %d\n",rank,size);
   } else {
