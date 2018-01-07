@@ -19,13 +19,16 @@ void quicksortOImpl(int a[], int n, int maxThreads);
 // Method Implementation
 // --- --- --- --- ---- --- --- ---
 //
-void quicksortOImpl2(int a[], int n, int maxThreads);
+void quicksortOImpl2(int a[], int n, int maxThreads, int * helperArray);
 
 void quicksortO(int a[], int n, int threads) {
   if (threads > 0) {
     if (threads > omp_get_max_threads()) threads = omp_get_max_threads();
     omp_set_num_threads(threads);
   }
+  //int * helperArray = malloc(sizeof(int) * n);
+  //quicksortOImpl2(a, n, threads, helperArray);
+  //free(helperArray);
   quicksortOImpl(a, n, threads);
 }
 
@@ -69,7 +72,7 @@ void quicksortOImpl(int a[], int n, int maxThreads) {
   }
 }
 
-void quicksortOImpl2(int a[], int n, int maxThreads)
+void quicksortOImpl2(int a[], int n, int maxThreads, int * helperArray)
 {
   if (n <= UNIT) {
     quicksortS(a, 0, n-1);
@@ -86,7 +89,6 @@ void quicksortOImpl2(int a[], int n, int maxThreads)
 
   int smaller[maxThreads];
   int larger[maxThreads];
-  int * helperArray = malloc(sizeof(int) * n);
   int actualThreads = maxThreads;
 #pragma omp parallel
   {
@@ -137,18 +139,13 @@ void quicksortOImpl2(int a[], int n, int maxThreads)
   //pivotIndex should always be 0 here
   a[smaller[actualThreads-1]] = pivotValue;
 
-  free(helperArray);
 
 #pragma omp parallel for
   for(int k = 0; k < 2; k++) {
     if(k == 0) {
-      if (n == 20000000) { printf("starting first\n"); }
-      quicksortOImpl2(a, smaller[actualThreads-1], actualThreads);
-      if (n == 20000000) { printf("ending first\n"); }
+      quicksortOImpl2(a, smaller[actualThreads-1], actualThreads, helperArray);
     }else {
-      if (n == 20000000) { printf("starting second\n"); }
-      quicksortOImpl2(a+smaller[actualThreads-1]+1, larger[actualThreads-1], actualThreads);
-      if (n == 20000000) { printf("ending second\n"); }
+      quicksortOImpl2(a+smaller[actualThreads-1]+1, larger[actualThreads-1], actualThreads, helperArray+smaller[actualThreads-1]+1);
     }
   }
 }
