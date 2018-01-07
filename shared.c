@@ -14,6 +14,10 @@ int randomNumberBetween(int low, int high) {
 }
 
 void printArray(int arr[], int size) {
+  if (size == 0) {
+    printf("[]");
+    return;
+  }
   printf("[");
   int i;
   for (i=0; i < size-1; i++)

@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include <mpi.h>
 #include "generator.h"
@@ -73,6 +74,7 @@ int main(int argc, char *argv[])
     a = (int*)malloc(n*sizeof(int));
     printf("Executing with: -n %i -s %i -S %i\n", n, s, seed);
     generateArray(a, s, n, seed);
+    printArray(a, n);
   }
   //TODO n/size must divide
   assert((size-1 & size) == 0);
@@ -103,35 +105,40 @@ int main(int argc, char *argv[])
   printArray(partialArray, n/size);
 
   int partialSize;
+  int * newPartialArray;
   if (rank%2 == 0) { //collect smaller values, send larger values
     int numSmallerFromOtherProcess;
     MPI_Sendrecv(
-        &partitionResult.larger, 1, MPI_INT, rank+1, MPI_ANY_TAG,
-        &numSmallerFromOtherProcess, 1, MPI_INT, rank+1, MPI_ANY_TAG,
+        &partitionResult.larger, 1, MPI_INT, rank+1, 1,
+        &numSmallerFromOtherProcess, 1, MPI_INT, rank+1, 1,
         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    partialSize = max(partitionResult.smaller+partitionResult.larger, partitionResult.smaller+numSmallerFromOtherProcess);
-    partialArray = (int*) realloc(partialArray, partialSize);
+
+    partialSize = partitionResult.smaller+numSmallerFromOtherProcess;
+    newPartialArray = (int*) malloc(partialSize * sizeof(int));
+    memcpy(newPartialArray, partialArray, partitionResult.smaller * sizeof(int));
+
     MPI_Sendrecv(
-        partialArray+partitionResult.smaller, partitionResult.larger, MPI_INT, rank+1, MPI_ANY_TAG,
-        partialArray+partitionResult.smaller, numSmallerFromOtherProcess, MPI_INT, rank+1, MPI_ANY_TAG,
+        partialArray+partitionResult.smaller, partitionResult.larger, MPI_INT, rank+1, 2,
+        newPartialArray+partitionResult.smaller, numSmallerFromOtherProcess, MPI_INT, rank+1, 2,
         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   } else { //collect larger values, send smaller values
     int numLargerFromOtherProcess;
     MPI_Sendrecv(
-        &partitionResult.smaller, 1, MPI_INT, rank-1, MPI_ANY_TAG,
-        &numLargerFromOtherProcess, 1, MPI_INT, rank-1, MPI_ANY_TAG,
+        &partitionResult.smaller, 1, MPI_INT, rank-1, 1,
+        &numLargerFromOtherProcess, 1, MPI_INT, rank-1, 1,
         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     partialSize = partitionResult.larger+numLargerFromOtherProcess;
-    int * newPartialArray = (int*) malloc(partialSize * sizeof(int));
+    newPartialArray = (int*) malloc(partialSize * sizeof(int));
     //copy larger values into first positions on newPartialArray
-    memcpy(newPartialArray, partialArray, partitionResult.larger * sizeof(int));
+    memcpy(newPartialArray, partialArray+partitionResult.smaller, partitionResult.larger * sizeof(int));
     MPI_Sendrecv(
-        partialArray, partitionResult.smaller, MPI_INT, rank-1, MPI_ANY_TAG,
-        newPartialArray+partitionResult.larger, numLargerFromOtherProcess, MPI_INT, rank-1, MPI_ANY_TAG,
+        partialArray, partitionResult.smaller, MPI_INT, rank-1, 2,
+        newPartialArray+partitionResult.larger, numLargerFromOtherProcess, MPI_INT, rank-1, 2,
         MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
+  free(partialArray);
   printf("after exchanging values, rank: %i, pivotValue: %i, \n", rank, pivotValue);
-  printArray(partialArray, n/size);
+  printArray(newPartialArray, partialSize);
 
 
 
