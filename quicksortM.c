@@ -7,6 +7,7 @@
 #include <mpi.h>
 #include "generator.h"
 #include "shared.h"
+#include "sorts.h"
 
 void assertSorted(int * a, int n) {
   for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
@@ -41,12 +42,9 @@ int max(int a, int b) {
 
 int main(int argc, char *argv[])
 {
-  int rank, size;
-  int prev;
-  char name[MPI_MAX_PROCESSOR_NAME];
-  int nlen;
-  int * a;
 
+  int rank, size;
+  int * a;
 
   MPI_Init(&argc,&argv);
 
@@ -59,8 +57,9 @@ int main(int argc, char *argv[])
   // get rank and size from communicator
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-
-  MPI_Get_processor_name(name,&nlen);
+  //TODO n/size must divide
+  assert((size-1 & size) == 0);
+  assert(n%size == 0);
 
   //now every processor does this - probably not that bad... (but not really needed)
   for (int i=1; i<argc&&argv[i][0]=='-'; i++) {
@@ -74,23 +73,47 @@ int main(int argc, char *argv[])
     a = (int*)malloc(n*sizeof(int));
     printf("Executing with: -n %i -s %i -S %i\n", n, s, seed);
     generateArray(a, s, n, seed);
+    printf("starting with array:\n");
     printArray(a, n);
   }
-  //TODO n/size must divide
-  assert((size-1 & size) == 0);
-  assert(n%size == 0);
   int * partialArray = (int*)malloc(sizeof(int)*(n/size));
   MPI_Scatter(a, n/size, MPI_INT, partialArray, n/size, MPI_INT, 0, MPI_COMM_WORLD);
   free(a);
 
+  if(rank == 0) {
+    start = MPI_Wtime();
+  }
+
+  //start quicksort
+  quicksort(partialArray, n/size, MPI_COMM_WORLD, size);
+
+  if(rank == 0) {
+    stop = MPI_Wtime();
+    //assertSorted(a, n);
+    printf(" > %f\n", stop-start);
+  }
+
+  MPI_Finalize();
+  return 0;
+}
+
+void quicksort(int * a, int n, MPI_Comm comm, int recursionQuotient) {
+
+  if(n < 2) return;
+  if(recursionQuotient == 0) {
+    //start sequential quicksort
+    quicksortS(a, n);
+    return;
+  }
+
   int pivotValue, pivotIndex;
   if (rank == 0) {
-    start = MPI_Wtime();
+    //start = MPI_Wtime();
     pivotIndex = randomNumberBetween(0, n-1);
     pivotValue = a[pivotIndex];
   }
-  MPI_Bcast(&pivotIndex, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&pivotValue, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&pivotIndex, 1, MPI_INT, 0, comm);
+  MPI_Bcast(&pivotValue, 1, MPI_INT, 0, comm);
   struct partitionResult partitionResult;
   if (rank*(n/size) <= pivotIndex && pivotIndex < (rank+1)*(n/size)) {
     int localPivotIndex = pivotIndex-rank*(n/size);
@@ -111,7 +134,7 @@ int main(int argc, char *argv[])
     MPI_Sendrecv(
         &partitionResult.larger, 1, MPI_INT, rank+1, 1,
         &numSmallerFromOtherProcess, 1, MPI_INT, rank+1, 1,
-        MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        comm, MPI_STATUS_IGNORE);
 
     partialSize = partitionResult.smaller+numSmallerFromOtherProcess;
     newPartialArray = (int*) malloc(partialSize * sizeof(int));
@@ -120,13 +143,13 @@ int main(int argc, char *argv[])
     MPI_Sendrecv(
         partialArray+partitionResult.smaller, partitionResult.larger, MPI_INT, rank+1, 2,
         newPartialArray+partitionResult.smaller, numSmallerFromOtherProcess, MPI_INT, rank+1, 2,
-        MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        comm, MPI_STATUS_IGNORE);
   } else { //collect larger values, send smaller values
     int numLargerFromOtherProcess;
     MPI_Sendrecv(
         &partitionResult.smaller, 1, MPI_INT, rank-1, 1,
         &numLargerFromOtherProcess, 1, MPI_INT, rank-1, 1,
-        MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        comm, MPI_STATUS_IGNORE);
     partialSize = partitionResult.larger+numLargerFromOtherProcess;
     newPartialArray = (int*) malloc(partialSize * sizeof(int));
     //copy larger values into first positions on newPartialArray
@@ -134,49 +157,18 @@ int main(int argc, char *argv[])
     MPI_Sendrecv(
         partialArray, partitionResult.smaller, MPI_INT, rank-1, 2,
         newPartialArray+partitionResult.larger, numLargerFromOtherProcess, MPI_INT, rank-1, 2,
-        MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        comm, MPI_STATUS_IGNORE);
   }
   free(partialArray);
   printf("after exchanging values, rank: %i, pivotValue: %i, \n", rank, pivotValue);
   printArray(newPartialArray, partialSize);
 
+  MPI_Comm commNew;
+  MPI_Comm_split(comm, rank%2, 0, &commNew);
+  int newRank, newSize;
+  MPI_Comm_size(commNew, &newSize);
+  MPI_Comm_rank(commNew, &newRank);
 
-
-
- //if (rank == 0) {
-  //  quicksort(a, n);
-  //} else {
-  //  int * partialArray = (int*)malloc(sizeof(int)*n);
-  //  MPI_Recv(into: partialArray);
-  //  partition(partialArray, paritionResult);
-  //  mpi-send(partialArray);
-  //}
-
-
-
-  //quicksort(int * a, int n, int rank, int num_processes) {
-  //  helperArray;
-  //  for (int i = 1; i <num_processes; i++) {
-  //    mpi_send(an: i, part of a);
-  //  }
-  //  for (int i = 1; i <num_processes; i++) {
-  //    mpi_recv(from: i, result: a);
-  //  }
-  //  mpi_xscan(
-
-  //  int pi = partition(a, n);
-
-  //  quicksort(a,  pi);
-  //  quicksort(a+pi+q, n-pi);
-  //}
-
-
-  if(rank == 0) {
-    stop = MPI_Wtime();
-    //assertSorted(a, n);
-    printf(" > %f\n", stop-start);
-  }
-
-  MPI_Finalize();
-  return 0;
+  //recursive calls:
+  quicksort(newPartialArray, partialSize, commNew, recursionQuotient/2);
 }
