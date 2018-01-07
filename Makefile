@@ -10,6 +10,12 @@ all: main
 #make for saturn - with two steps it is not working:
 main:
 	$(CC) -Wall -O3 -fcilkplus -fopenmp -o main main.c generator.c quicksortC.c quicksortO.c quicksortS.c shared.c -O3 -Wall
+
+mpi:
+	mpicc  -std=c99 -O0 -g -o mpi quicksortM.c quicksortS.c shared.c generator.c
+	#this should be the call afterwars - the upper call is just for debugging
+	#mpicc  -std=c99 -O3 -o mpi quicksortM.c quicksortS.c shared.c generator.c
+
 #main: generator.o main.o quicksortC.o quicksortS.o quicksortO.o shared.o
 #	$(CC) -fcilkplus -fopenmp -Wall -o $@ -O3 $^
 
@@ -31,4 +37,4 @@ testscan.o: testscan.c
 
 
 clean:
-	rm -f generator.o main.o quicksortC.o quicksortS.o quicksortO.o main
+	rm -f generator.o shared.o main.o quicksortC.o quicksortS.o quicksortO.o main mpi
