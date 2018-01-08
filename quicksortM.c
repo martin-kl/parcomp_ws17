@@ -106,7 +106,6 @@ int main(int argc, char *argv[])
   partialArray = quicksort(partialArray, n/size, MPI_COMM_WORLD, &newSize);
 
   printf("After Quicksort - rank: %i \n", rank);
-	//TODO Problem: we don't know the size of partialArray here...
   printArray(partialArray, newSize);
   assertSorted(partialArray, newSize);
 
@@ -121,11 +120,6 @@ int main(int argc, char *argv[])
 }
 
 int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
-  if(n < 2) {
-    *newSize = n;
-    return partialArray;
-  }
-
   int rank,size;
   MPI_Comm_size(comm,&size);
   MPI_Comm_rank(comm,&rank);
@@ -148,13 +142,8 @@ int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
   MPI_Bcast(&pivotIndex, 1, MPI_INT, 0, comm);
   MPI_Bcast(&pivotValue, 1, MPI_INT, 0, comm);
 
-  //_printArray(partialArray, n, "before local partition steps", rank, pivotValue);
   struct partitionResult partitionResult;
   partition(partialArray, 0, n-1, &partitionResult, pivotValue);
-
-  //printf("rank: %i, pivotValue: %i, \n", rank, pivotValue);
-  //_printArray(partialArray, n, "after local partition steps without exchanging", rank, pivotValue);
-  //printf("rank=%i got %i smaller and %i larger values after partitioning before exchanging\n", rank, partitionResult.smaller, partitionResult.larger);
 
   int partialSize;
   int * tempPartialArray;
@@ -165,87 +154,52 @@ int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
         &numSmallerFromOtherProcess, 1, MPI_INT, rank+1, 1,
         comm, MPI_STATUS_IGNORE);
 
-	printf("0...\n");
     partialSize = partitionResult.smaller + numSmallerFromOtherProcess;
-	printf("1...\n");
 
     //copy all larger values from this process into tempPartialArray
     tempPartialArray = (int*) malloc(partitionResult.larger * sizeof(int));
-assert(tempPartialArray != NULL);
-	printf("2...\n");
+    assert(tempPartialArray != NULL);
     memcpy(tempPartialArray, partialArray+partitionResult.smaller, partitionResult.larger * sizeof(int));
-	printf("3...\n");
 
     //reallocate partitialArray to size of all smaller elements from both
     partialArray = (int*) realloc(partialArray, partialSize * sizeof(int));
-	printf("4...\n");
-    //_printArray(partialArray, partialSize, "reallocated array with smaller values starting pos 0", rank, pivotValue);
-    //_printArray(tempPartialArray, partitionResult.larger, "sending tempPartialArray (larger values from 0) to process 1", rank, pivotValue);
 
     MPI_Sendrecv(
         tempPartialArray, partitionResult.larger, MPI_INT, rank+1, 2,
         partialArray + partitionResult.smaller, numSmallerFromOtherProcess, MPI_INT, rank+1, 2,
         comm, MPI_STATUS_IGNORE);
-	printf("5...\n");
-    //_printArray(partialArray+partitionResult.smaller, numSmallerFromOtherProcess, "received array from process 1 (should be smaller values from process 1)", rank, pivotValue);
   } else { //collect larger values, send smaller values
     int numLargerFromOtherProcess;
     MPI_Sendrecv(
         &partitionResult.smaller, 1, MPI_INT, rank-1, 1,
         &numLargerFromOtherProcess, 1, MPI_INT, rank-1, 1,
         comm, MPI_STATUS_IGNORE);
-	printf("6...\n");
 
     partialSize = partitionResult.larger + numLargerFromOtherProcess;
-	printf("7...\n");
     //copy all smaller values from this process into tempPartialArray
     tempPartialArray = (int*) malloc(partitionResult.smaller * sizeof(int));
-assert(tempPartialArray != NULL);
-	printf("8...\n");
+    assert(tempPartialArray != NULL);
     //copy smaller values into first positions on tempPartialArray
     memcpy(tempPartialArray, partialArray, partitionResult.smaller * sizeof(int));
-	printf("8...\n");
 
     //reallocate partialArray and set larger elements to first position (we need memmove cause memory regions can overlap)
     memmove(partialArray, partialArray+partitionResult.smaller, partitionResult.larger * sizeof(int));
-	printf("9...\n");
     partialArray = (int*) realloc(partialArray, partialSize * sizeof(int));
-	printf("10...\n");
-    //_printArray(partialArray, partialSize, "reallocated array with larger values starting pos 0", rank, pivotValue);
-
-    //_printArray(tempPartialArray, partitionResult.smaller, "sending tempPartialArray (smaller values from 1) to process 0", rank, pivotValue);
 
     MPI_Sendrecv(
         tempPartialArray, partitionResult.smaller, MPI_INT, rank-1, 2,
         partialArray + partitionResult.larger, numLargerFromOtherProcess, MPI_INT, rank-1, 2,
         comm, MPI_STATUS_IGNORE);
-	printf("10.1...\n");
-    //_printArray(partialArray+partitionResult.larger, numLargerFromOtherProcess, "received array from process 0 (should be larger values from process 0)", rank, pivotValue);
   }
-  //free tempPartialArray again
-	printf("11...\n");
   free(tempPartialArray);
-	printf("12...\n");
 
   _printArray(partialArray, partialSize, "after partition and exchanging", rank, pivotValue);
 
   MPI_Comm commNew;
-	printf("13...\n");
 
   MPI_Comm_split(comm, rank%2, 0, &commNew);
-	if(comm != MPI_COMM_WORLD)
+  if(comm != MPI_COMM_WORLD)
     MPI_Comm_free(&comm);
 
-	printf("14...\n");
-  //int newRank, newSize;
-  printf("\n\nafter getting new comm\n");
-  //the next lines are not neede here....
-  //MPI_Comm_size(commNew, &newSize);
-  //MPI_Comm_rank(commNew, &newRank);
-
-  //TODO SMELL
-  int wurscht;
-  //recursive calls:
-  *newSize = partialSize;
-  return quicksort(partialArray, partialSize, commNew, &wurscht);
+  return quicksort(partialArray, partialSize, commNew, newSize);
 }
