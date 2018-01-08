@@ -95,10 +95,10 @@ int main(int argc, char *argv[])
   }
   int * partialArray = (int*)malloc(sizeof(int)*(n/size));
   MPI_Scatter(a, n/size, MPI_INT, partialArray, n/size, MPI_INT, 0, MPI_COMM_WORLD);
-  free(a);
 
   if(rank == 0) {
     start = MPI_Wtime();
+    free(a);
   }
 
   //start quicksort
@@ -171,7 +171,7 @@ assert(tempPartialArray != NULL);
 	printf("3...\n");
 
     //reallocate partitialArray to size of all smaller elements from both
-    partialArray = (int*) realloc(partialArray, partialSize);
+    partialArray = (int*) realloc(partialArray, partialSize * sizeof(int));
 	printf("4...\n");
     //_printArray(partialArray, partialSize, "reallocated array with smaller values starting pos 0", rank, pivotValue);
     //_printArray(tempPartialArray, partitionResult.larger, "sending tempPartialArray (larger values from 0) to process 1", rank, pivotValue);
@@ -203,12 +203,12 @@ assert(tempPartialArray != NULL);
     //reallocate partialArray and set larger elements to first position (we need memmove cause memory regions can overlap)
     memmove(partialArray, partialArray+partitionResult.smaller, partitionResult.larger * sizeof(int));
 	printf("9...\n");
-    partialArray = (int*) realloc(partialArray, partialSize);
+    partialArray = (int*) realloc(partialArray, partialSize * sizeof(int));
 	printf("10...\n");
     //_printArray(partialArray, partialSize, "reallocated array with larger values starting pos 0", rank, pivotValue);
 
     //_printArray(tempPartialArray, partitionResult.smaller, "sending tempPartialArray (smaller values from 1) to process 0", rank, pivotValue);
-    
+
     MPI_Sendrecv(
         tempPartialArray, partitionResult.smaller, MPI_INT, rank-1, 2,
         partialArray + partitionResult.larger, numLargerFromOtherProcess, MPI_INT, rank-1, 2,
@@ -218,11 +218,10 @@ assert(tempPartialArray != NULL);
   }
   //free tempPartialArray again
 	printf("11...\n");
-  //free(tempPartialArray);
+  free(tempPartialArray);
 	printf("12...\n");
 
-  //printf("after exchanging values, rank: %i, pivotValue: %i, \n", rank, pivotValue);
-  //_printArray(tempPartialArray, partialSize, "after partition and exchanging", rank, pivotValue);
+  _printArray(partialArray, partialSize, "after partition and exchanging", rank, pivotValue);
 
   MPI_Comm commNew;
 	printf("13...\n");
@@ -239,6 +238,6 @@ assert(tempPartialArray != NULL);
   //MPI_Comm_rank(commNew, &newRank);
 
   //recursive calls:
-  //quicksort(partialArray, partialSize, commNew);
+  quicksort(partialArray, partialSize, commNew);
   return partialSize;
 }
