@@ -90,12 +90,13 @@ int main(int argc, char *argv[])
     printf("Executing with: -n %i -s %i -S %i\n", n, s, seed);
     generateArray(a, s, n, seed);
     //printf("starting with array:\n");
-    _printArray(a, n, "starting with array:", rank, -1);
-    printf("\n");
+    //_printArray(a, n, "starting with array:", rank, -1);
+    //printf("\n");
   }
   int * partialArray = (int*)malloc(sizeof(int)*(n/size));
   MPI_Scatter(a, n/size, MPI_INT, partialArray, n/size, MPI_INT, 0, MPI_COMM_WORLD);
 
+  MPI_Barrier(MPI_COMM_WORLD);
   if(rank == 0) {
     start = MPI_Wtime();
     free(a);
@@ -105,15 +106,16 @@ int main(int argc, char *argv[])
   int newSize;
   partialArray = quicksort(partialArray, n/size, MPI_COMM_WORLD, &newSize);
 
-  printf("After Quicksort - rank: %i \n", rank);
-  printArray(partialArray, newSize);
-  assertSorted(partialArray, newSize);
+  //printf("After Quicksort - rank: %i \n", rank);
+  //printArray(partialArray, newSize);
 
+  MPI_Barrier(MPI_COMM_WORLD);
   if(rank == 0) {
     stop = MPI_Wtime();
     //assertSorted(a, n);
     printf(" > %f\n", stop-start);
   }
+  assertSorted(partialArray, newSize);
 
   MPI_Finalize();
   return 0;
@@ -136,14 +138,24 @@ int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
   int pivotValue, pivotIndex;
   if (rank == 0) {
     //start = MPI_Wtime();
-    pivotIndex = randomNumberBetween(0, n-1);
-    pivotValue = partialArray[pivotIndex];
+    if(n == 0) {
+      //assume just some value as pivot
+      pivotValue = 25;
+    }else {
+      pivotIndex = randomNumberBetween(0, n-1);
+      pivotValue = partialArray[pivotIndex];
+    }
   }
   MPI_Bcast(&pivotIndex, 1, MPI_INT, 0, comm);
   MPI_Bcast(&pivotValue, 1, MPI_INT, 0, comm);
 
   struct partitionResult partitionResult;
-  partition(partialArray, 0, n-1, &partitionResult, pivotValue);
+  if(n != 0) {
+    partition(partialArray, 0, n-1, &partitionResult, pivotValue);
+  } else {
+    partitionResult.smaller = 0;
+    partitionResult.larger = 0;
+  }
 
   int partialSize;
   int * tempPartialArray;
@@ -193,7 +205,7 @@ int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
   }
   free(tempPartialArray);
 
-  _printArray(partialArray, partialSize, "after partition and exchanging", rank, pivotValue);
+  //_printArray(partialArray, partialSize, "after partition and exchanging", rank, pivotValue);
 
   MPI_Comm commNew;
 

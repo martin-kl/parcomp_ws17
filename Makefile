@@ -1,8 +1,6 @@
 CC = gcc-7
 CFLAGS = -Wall -g -std=c99 $(DEFS)
 
-#OBJECTFILES = client.o server.o
-
 .PHONY: all clean
 
 all: main
@@ -12,9 +10,9 @@ main:
 	$(CC) -Wall -O3 -fcilkplus -fopenmp -o main main.c generator.c quicksortC.c quicksortO.c quicksortS.c shared.c -O3 -Wall
 
 mpi:
-	mpicc  -std=c99 -O0 -g -o mpi quicksortM.c quicksortS.c shared.c generator.c
+	mpicc  -std=c99 -O3 -o mpi quicksortM.c quicksortS.c shared.c generator.c
+	#mpicc  -std=c99 -O0 -g -o mpi quicksortM.c quicksortS.c shared.c generator.c
 	#this should be the call afterwars - the upper call is just for debugging
-	#mpicc  -std=c99 -O3 -o mpi quicksortM.c quicksortS.c shared.c generator.c
 
 #main: generator.o main.o quicksortC.o quicksortS.o quicksortO.o shared.o
 #	$(CC) -fcilkplus -fopenmp -Wall -o $@ -O3 $^
