@@ -99,7 +99,6 @@ int main(int argc, char *argv[])
   MPI_Barrier(MPI_COMM_WORLD);
   if(rank == 0) {
     start = MPI_Wtime();
-    free(a);
   }
 
   //start quicksort
@@ -112,11 +111,34 @@ int main(int argc, char *argv[])
   MPI_Barrier(MPI_COMM_WORLD);
   if(rank == 0) {
     stop = MPI_Wtime();
-    //assertSorted(a, n);
     printf(" > %f\n", stop-start);
   }
-  assertSorted(partialArray, newSize);
 
+  int * elementsPerProcess = NULL;
+  int * displacementPerProcess = NULL;
+  if (rank == 0) {
+    elementsPerProcess = (int*) malloc(size*sizeof(int));
+    displacementPerProcess = (int*) malloc(size*sizeof(int));
+  }
+  MPI_Gather(&newSize, 1, MPI_INT, elementsPerProcess, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  if (rank == 0) {
+    int numValues = 0;
+    for (int i = 0; i < size; i+=2) {
+      displacementPerProcess[i] = numValues;
+      numValues += elementsPerProcess[i];
+    }
+    for (int i = 1; i < size; i+=2) {
+      displacementPerProcess[i] = numValues;
+      numValues += elementsPerProcess[i];
+    }
+  }
+  MPI_Gatherv(partialArray, newSize, MPI_INT, a, elementsPerProcess, displacementPerProcess, MPI_INT, 0, MPI_COMM_WORLD);
+  if (rank == 0) {
+    assertSorted(a, n);
+    free(elementsPerProcess);
+    free(displacementPerProcess);
+    free(a);
+  }
   MPI_Finalize();
   return 0;
 }
