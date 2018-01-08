@@ -9,7 +9,7 @@
 #include "shared.h"
 #include "sorts.h"
 
-int quicksort(int * partialArray, int n, MPI_Comm comm);
+int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize);
 void assertSorted(int * a, int n) {
   for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
 }
@@ -102,11 +102,13 @@ int main(int argc, char *argv[])
   }
 
   //start quicksort
-  int newSize = quicksort(partialArray, n/size, MPI_COMM_WORLD);
+  int newSize;
+  partialArray = quicksort(partialArray, n/size, MPI_COMM_WORLD, &newSize);
 
   printf("After Quicksort - rank: %i \n", rank);
 	//TODO Problem: we don't know the size of partialArray here...
   printArray(partialArray, newSize);
+  assertSorted(partialArray, newSize);
 
   if(rank == 0) {
     stop = MPI_Wtime();
@@ -118,8 +120,11 @@ int main(int argc, char *argv[])
   return 0;
 }
 
-int quicksort(int * partialArray, int n, MPI_Comm comm) {
-  if(n < 2) return n;
+int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
+  if(n < 2) {
+    *newSize = n;
+    return partialArray;
+  }
 
   int rank,size;
   MPI_Comm_size(comm,&size);
@@ -127,9 +132,10 @@ int quicksort(int * partialArray, int n, MPI_Comm comm) {
 
   //if the processor is alone in the communicator it's time to sort sequentially
   if(size == 1) {
+    *newSize = n;
     //start sequential quicksort
     quicksortS(partialArray, 0, n-1);
-    return n;
+    return partialArray;
   }
 
 
@@ -237,7 +243,9 @@ assert(tempPartialArray != NULL);
   //MPI_Comm_size(commNew, &newSize);
   //MPI_Comm_rank(commNew, &newRank);
 
+  //TODO SMELL
+  int wurscht;
   //recursive calls:
-  quicksort(partialArray, partialSize, commNew);
-  return partialSize;
+  *newSize = partialSize;
+  return quicksort(partialArray, partialSize, commNew, &wurscht);
 }
