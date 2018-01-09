@@ -12,25 +12,19 @@
 #include "generator.h"
 #include "shared.h"
 
-// A utility function to swap two elements
-void swap(int* a, int* b);
-
 // --- --- --- --- --- --- --- --- ---
 // Method Implementation
 // --- --- --- --- --- --- --- --- ---
 
-
 void quicksortS(int arr[], int low, int high) {
   if (low < high) {
-    /* pi is partitioning index, arr[p] is now
-       at right place */
+    /* pi is partitioning index, arr[p] is now at right place */
 
     int pivotIndex = randomNumberBetween(low, high);
     int pivotValue = arr[pivotIndex];
     //switch pivot to first element
     arr[pivotIndex] = arr[low];
     arr[low] = pivotValue;
-
 
     struct partitionResult result;
     partition(arr, low+1, high, &result, pivotValue);
