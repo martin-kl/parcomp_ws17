@@ -20,16 +20,30 @@ void quicksort2(int a[], int n, int * helperArray);
 void _partition(int a[], int low, int high, struct partitionResult * result, int helperArray[], int pivotValue);
 void writeBack(int helperArray[], int a[], int n, struct partitionResult * res1, struct partitionResult * res2, int isSmallerOne);
 
+int already_set_worker_count = 0;
+void setThreads(int threads) {
+  if (already_set_worker_count == 1) { return; }
+  char str[8];
+  sprintf(str, "%d", threads);
+  if (0!= __cilkrts_set_param("nworkers", str)) {
+    printf("Failed to set worker count. Aborting.\n");
+    exit(1);
+  }
+  already_set_worker_count = 1;
+}
+
 // --- --- ---- ---- ---- ---- ---- ---
 // Implementation
 // --- --- ---- ---- ---- ---- ---- ---
 
 //maxThreads is not needed here, is just for omp implementation!
 void quicksortC(int a[], int n, int maxThreads ) {
+  setThreads(maxThreads);
   quicksort(a, n);
 }
 
 void quicksortC2(int a[], int n, int maxThreads ) {
+  setThreads(maxThreads);
   int * helperArray = malloc(sizeof(int) * n);
   quicksort2(a, n, helperArray);
   free(helperArray);
@@ -89,9 +103,7 @@ void quicksort2(int a[], int n, int * helperArray) {
     return;
   }
 
-  //if there are less than 100 000 elements, jsut use 1 thread/process
-  if(n < 10000) {
-    // partition with just one thread
+  if(n < 10000) { // partition with just one thread
     int pivotIndex = randomNumberBetween(0, n-1);
     int pivotValue = a[pivotIndex];
     //switch pivot to first element
@@ -109,9 +121,7 @@ void quicksort2(int a[], int n, int * helperArray) {
     cilk_spawn quicksort2(a+pi+1, n-pi-1, helperArray+pi+1);
     cilk_sync;
 
-  } else {
-    //use more than one thread
-    //printf("with more threads...\n");
+  } else { // use more than one thread
     struct partitionResult res1;
     struct partitionResult res2;
 
@@ -126,21 +136,17 @@ void quicksort2(int a[], int n, int * helperArray) {
     cilk_spawn _partition(a, n/2+1, n-1, &res2, helperArray, pivotValue);
     cilk_sync;
 
-    int overallSmaller = res1.smaller + res2.smaller;
-    int overallLarger = res1.larger + res2.larger;
-
     cilk_spawn writeBack(helperArray, a, n, &res1, &res2, 1);
     cilk_spawn writeBack(helperArray, a, n, &res1, &res2, 0);
     cilk_sync;
 
+
+    int overallSmaller = res1.smaller + res2.smaller;
+    int overallLarger = res1.larger + res2.larger;
+
     //write pivot on correct position
-    a[res1.smaller+res2.smaller] = pivotValue;
-    //a[overallSmaller] = pivotValue;
+    a[overallSmaller] = pivotValue;
 
-    //printf("result:\n");
-    //printArray(a,n);
-
-    //spawn recursive cilk threads
     cilk_spawn quicksort2(a, overallSmaller, helperArray);
     cilk_spawn quicksort2(a+overallSmaller+1, overallLarger, helperArray+overallSmaller+1);
     cilk_sync;
@@ -149,7 +155,6 @@ void quicksort2(int a[], int n, int * helperArray) {
 
 void _partition(int a[], int low, int high, struct partitionResult * result, int helperArray[], int pivotValue) {
   partition(a, low, high, result, pivotValue);
-  //memcopy parallel:
   memcpy(helperArray+low, a+low, (sizeof(int) * (high-low+1)));
 }
 
@@ -181,33 +186,4 @@ void writeBack(int helperArray[],int a[], int n, struct partitionResult * res1, 
       ai++;
     }
   }
-  /*
-  //old version:
-  if(isLargerOne == 0) {
-//write smaller ones:
-int ai = 0;
-//on i = 0 is pivot
-for(int i = 1; i <= p1Smaller; i++) {
-a[ai] = helperArray[i];
-ai++;
-}
-//start here with 0 ?!? cause in the mid there is no pivot
-for(int i = 0; i < p2Smaller; i++) {
-a[ai] = helperArray[n/2+i+1];
-ai++;
-}
-}else {
-  //write larger ones:
-  //plus 1 for pivot
-  int ai = p1Smaller + p2Smaller + 1;
-  for(int i = 0; i < n/2-p1Smaller; i++) {
-  a[ai] = helperArray[p1Smaller+i];
-  ai++;
-  }
-  for(int i = 0; i < n/2-1-p2Smaller; i++) {
-  a[ai] = helperArray[n/2+p2Smaller+i];
-  ai++;
-  }
-  }
-  */
 }
