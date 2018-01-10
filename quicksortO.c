@@ -27,13 +27,13 @@ void quicksortO(int a[], int n, int threads) {
     omp_set_num_threads(threads);
   }
   //if we use first implementation: (comment out lines below)
-  quicksortOImpl(a, n, threads);
+  //quicksortOImpl(a, n, threads);
 
 
   //if we use the second implementation: (comment out line above with quicksort call)
-  //int * helperArray = malloc(sizeof(int) * n);
-  //quicksortOImpl2(a, n, threads, helperArray);
-  //free(helperArray);
+  int * helperArray = malloc(sizeof(int) * n);
+  quicksortOImpl2(a, n, threads, helperArray);
+  free(helperArray);
 }
 
 void quicksortOImpl(int a[], int n, int maxThreads) {
@@ -41,11 +41,10 @@ void quicksortOImpl(int a[], int n, int maxThreads) {
     quicksortS(a, 0, n-1);
     return;
   }
+
   int low = 0;
   int high = n-1;
   if (low < high) {
-    /* pi is partitioning index, arr[p] is now at right place */
-
     int pivotIndex = randomNumberBetween(low, high);
     int pivotValue = a[pivotIndex];
     //switch pivot to first element
@@ -61,15 +60,10 @@ void quicksortOImpl(int a[], int n, int maxThreads) {
     #pragma omp parallel
     #pragma omp for
     for(int k = 0; k < 2; k++) {
-    //printf("threads: %i\n", omp_get_num_threads());
       if(k == 0) {
-        //printf("starting first %i\n", n);
         quicksortOImpl(a, pi, maxThreads);
-        //printf("ending first %i\n", n);
       }else {
-         //printf("starting second %i\n", n);
         quicksortOImpl(a+pi+1, n-pi-1, maxThreads);
-         //printf("ending second %i\n", n);
       }
     }
   }
