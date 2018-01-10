@@ -10,26 +10,30 @@
 #include "generator.h"
 #include "shared.h"
 
-#define UNIT (1000)
+#define UNIT (5000)
 
 
 void quicksortOImpl(int a[], int n, int maxThreads);
+void quicksortOImpl2(int a[], int n, int maxThreads, int * helperArray);
 
 // --- --- --- --- ---- --- --- ---
 // Method Implementation
 // --- --- --- --- ---- --- --- ---
 //
-void quicksortOImpl2(int a[], int n, int maxThreads, int * helperArray);
 
 void quicksortO(int a[], int n, int threads) {
   if (threads > 0) {
     if (threads > omp_get_max_threads()) threads = omp_get_max_threads();
     omp_set_num_threads(threads);
   }
+  //if we use first implementation: (comment out lines below)
+  quicksortOImpl(a, n, threads);
+
+
+  //if we use the second implementation: (comment out line above with quicksort call)
   //int * helperArray = malloc(sizeof(int) * n);
   //quicksortOImpl2(a, n, threads, helperArray);
   //free(helperArray);
-  quicksortOImpl(a, n, threads);
 }
 
 void quicksortOImpl(int a[], int n, int maxThreads) {
@@ -40,8 +44,7 @@ void quicksortOImpl(int a[], int n, int maxThreads) {
   int low = 0;
   int high = n-1;
   if (low < high) {
-    /* pi is partitioning index, arr[p] is now
-       at right place */
+    /* pi is partitioning index, arr[p] is now at right place */
 
     int pivotIndex = randomNumberBetween(low, high);
     int pivotValue = a[pivotIndex];
@@ -72,6 +75,8 @@ void quicksortOImpl(int a[], int n, int maxThreads) {
   }
 }
 
+
+//second version / implementation, to call this, change quicksortO(...) method
 void quicksortOImpl2(int a[], int n, int maxThreads, int * helperArray)
 {
   if (n <= UNIT) {

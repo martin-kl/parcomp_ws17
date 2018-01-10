@@ -90,9 +90,9 @@ int main(int argc, char *argv[]) {
   int * a = (int*)malloc(n*sizeof(int));
 
   double times[calls];
-  double best1 = DBL_MAX;
-  double worst1 = 0;
-  double mean1 = 0;
+  double best = DBL_MAX;
+  double worst = 0;
+  double mean = 0;
   printf("\nsorting times with parallel algorithm:\n");
   for(int i = 0; i < calls; i++) {
     generateArray(a, s, n, seed);
@@ -100,45 +100,44 @@ int main(int argc, char *argv[]) {
     implementation(a, n, threads);
     stop = mytime();
     times[i] = stop-start;
-    if(times[i] > worst1) worst1 = times[i];
-    if(times[i] < best1) best1 = times[i];
-    mean1 += times[i];
+    if(times[i] > worst) worst = times[i];
+    if(times[i] < best) best = times[i];
+    mean += times[i];
     //printf(" > %f\n", stop-start);
   }
   //only assert last solution
   assertSorted(a, n);
-  mean1 /= calls;
+  mean /= calls;
   printf("times for (first) parallel algorithm:\n");
-  printf("\tbest (fastest) run: %f\n", best1);
-  printf("\tworst (slowest) run: %f\n", worst1);
-  printf("\tmean runtime: %f\n", mean1);
+  printf("\tbest (fastest) run: %f\n", best);
+  printf("\tworst (slowest) run: %f\n", worst);
+  printf("\tmean runtime: %f\n", mean);
 
 
   if (compare != NULL) {
     printf("\n ===  ===  ===  ===  ===  ===  ===  ===  ===  ===  === \n\n");
-    double times2[calls];
-    double best2 = DBL_MAX;
-    double worst2 = 0;
-    double mean2 = 0;
     printf("sorting times with second parallel algorithm:\n");
+    best = DBL_MAX;
+    worst = 0;
+    mean = 0;
     for(int i = 0; i < calls; i++) {
       generateArray(a, s, n, seed);
       start = mytime();
       compare(a, n, threads);
       stop = mytime();
-      times2[i] = stop-start;
-      if(times2[i] > worst2) worst2 = times2[i];
-      if(times2[i] < best2) best2 = times2[i];
-      mean2 += times2[i];
+      times[i] = stop-start;
+      if(times[i] > worst) worst = times[i];
+      if(times[i] < best) best = times[i];
+      mean += times[i];
       //printf(" > %f\n", stop-start);
     }
     //assert only last solution
     assertSorted(a, n);
-    mean2 /= calls;
+    mean /= calls;
     printf("times for second parallel algorithm:\n");
-    printf("\tbest (fastest) run: %f\n", best2);
-    printf("\tworst (slowest) run: %f\n", worst2);
-    printf("\tmean runtime: %f\n", mean2);
+    printf("\tbest (fastest) run: %f\n", best);
+    printf("\tworst (slowest) run: %f\n", worst);
+    printf("\tmean runtime: %f\n", mean);
   }
 
   printf("\n ===  ===  ===  ===  ===  ===  ===  ===  ===  ===  === \n\n");
