@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <float.h>
 
 #include "generator.h"
 #include "sorts.h"
@@ -86,33 +87,61 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Executing with: -n %i -s %i -t %i -S %i -c %i -a %c -A %c\n", n, s, threads, seed, calls, alg, Alg);
-
   int * a = (int*)malloc(n*sizeof(int));
 
-
-
-  printf("sorting times with parallel algorithm:\n");
+  double times[calls];
+  double best1 = DBL_MAX;
+  double worst1 = 0;
+  double mean1 = 0;
+  printf("\nsorting times with parallel algorithm:\n");
   for(int i = 0; i < calls; i++) {
     generateArray(a, s, n, seed);
     start = mytime();
     implementation(a, n, threads);
     stop = mytime();
-    assertSorted(a, n);
-    printf(" > %f\n", stop-start);
+    times[i] = stop-start;
+    if(times[i] > worst1) worst1 = times[i];
+    if(times[i] < best1) best1 = times[i];
+    mean1 += times[i];
+    //printf(" > %f\n", stop-start);
   }
+  //only assert last solution
+  assertSorted(a, n);
+  mean1 /= calls;
+  printf("times for (first) parallel algorithm:\n");
+  printf("\tbest (fastest) run: %f\n", best1);
+  printf("\tworst (slowest) run: %f\n", worst1);
+  printf("\tmean runtime: %f\n", mean1);
+
 
   if (compare != NULL) {
+    printf("\n ===  ===  ===  ===  ===  ===  ===  ===  ===  ===  === \n\n");
+    double times2[calls];
+    double best2 = DBL_MAX;
+    double worst2 = 0;
+    double mean2 = 0;
     printf("sorting times with second parallel algorithm:\n");
     for(int i = 0; i < calls; i++) {
       generateArray(a, s, n, seed);
       start = mytime();
       compare(a, n, threads);
       stop = mytime();
-      assertSorted(a, n);
-      printf(" > %f\n", stop-start);
+      times2[i] = stop-start;
+      if(times2[i] > worst2) worst2 = times2[i];
+      if(times2[i] < best2) best2 = times2[i];
+      mean2 += times2[i];
+      //printf(" > %f\n", stop-start);
     }
+    //assert only last solution
+    assertSorted(a, n);
+    mean2 /= calls;
+    printf("times for second parallel algorithm:\n");
+    printf("\tbest (fastest) run: %f\n", best2);
+    printf("\tworst (slowest) run: %f\n", worst2);
+    printf("\tmean runtime: %f\n", mean2);
   }
 
+  printf("\n ===  ===  ===  ===  ===  ===  ===  ===  ===  ===  === \n\n");
   generateArray(a, s, n, seed);
 
   //call sequential algorithm
@@ -123,7 +152,7 @@ int main(int argc, char *argv[]) {
   assertSorted(a, n);
   printf("time for sequential algorithm: %.5f\n", (stop-start));
   printf("\n");
-
+  
   free(a);
   return 0;
 }
