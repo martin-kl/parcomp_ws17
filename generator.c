@@ -1,4 +1,3 @@
-//generates different arrays with size = xxxxx (make a header file for this
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -50,55 +49,3 @@ void generateIntRandomNumbersWithSeed(int *a, int size, int minNumber, int maxNu
     a[i] = random;
 	}
 }
-
-
-//all methods again for double - but ATTENTION: they still have a malloc in there!
-/*
-double* generateDoubleSameNumbers(int size) {
-    double* result = (double *)malloc(sizeof(double) * size);
-	for(int i = 0; i < size; i++) {
-		result[i] = 27.0;
-	}
-	return result;
-}
-
-double* generateDoubleAscendingNumbers(int size) {
-    double* result = (double *)malloc(sizeof(double) * size);
-	for(int i = 0; i < size; i++) {
-		result[i] = i+1.1;
-	}
-	return result;
-}
-
-double* generateDoubleDescendingNumbers(int size) {
-    double* result = (double *)malloc(sizeof(double) * size);
-    double number = size;
-	for(int i = 0; i < size; i++) {
-		result[i] = number;
-        number--;
-	}
-	return result;
-}
-
-double* generateDoublePeriodicNumbers(int size) {
-    double* result = (double *)malloc(sizeof(double) * size);
-	for(int i = 0; i < size; i++) {
-		result[i] = (100 - i) % 27;
-	}
-	return result;
-}
-
-double* generateDoubleRandomNumbers(int size, double minNumber, double maxNumber) {
-    double difference = maxNumber - minNumber;
-    double div = RAND_MAX/difference;
-    double* result = (double *)malloc(sizeof(double) * size);
-    srand((unsigned)time(NULL));
-	for(int i = 0; i < size; i++) {
-            int random = rand();
-            double randDouble = minNumber + (random / div);
-            result[i] = randDouble;
-	}
-	return result;
-}
-*/
-
