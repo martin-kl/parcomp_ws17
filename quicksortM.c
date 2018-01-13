@@ -9,7 +9,8 @@
 #include "shared.h"
 #include "sorts.h"
 
-int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize);
+double _quicksort(int * a, int n, int rank, int size);
+int * _rec_quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize);
 void assertSorted(int * a, int n) {
   for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
 }
@@ -58,52 +59,69 @@ int max(int a, int b) {
 int main(int argc, char *argv[])
 {
 
-  int rank, size;
-  int * a;
-
-  MPI_Init(&argc,&argv);
 
   //variables for quicksort:
-  double start, stop;
   int s = 0;
   int n = 1;
+  int c = 1;
   unsigned seed = 0;
 
-  // get rank and size from communicator
-  MPI_Comm_size(MPI_COMM_WORLD,&size);
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
   //now every processor does this - probably not that bad... (but not really needed)
   for (int i=1; i<argc&&argv[i][0]=='-'; i++) {
     if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
+    if (argv[i][1]=='c') i++,sscanf(argv[i],"%d",&c); //length of array
     if (argv[i][1]=='s') i++,sscanf(argv[i],"%d",&s); //type of array
     if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed);
   }
 
-  //TODO n/size must divide
+  int * a = (int*)malloc(n*sizeof(int));
+  printf("Executing with: -n %i -s %i -S %i -c %i\n", n, s, seed, c);
+
+
+  MPI_Init(&argc,&argv);
+  int rank, size;
+  MPI_Comm_size(MPI_COMM_WORLD,&size);
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
+  double times[c];
+  double mean = 0;
+  for (int i = 0; i < c; i++) {
+    if (rank == 0) { generateArray(a, s, n, seed); }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    double time = _quicksort(a, n, rank, size);
+    if (rank == 0) {
+      assertSorted(a, n);
+      times[i] = time;
+      mean += time;
+      printf("  > %f\n", time);
+    }
+  }
+  if (rank == 0) {
+    free(a);
+    printf("\tmean runtime: %f\n", mean/c);
+  }
+  MPI_Finalize();
+  return 0;
+}
+
+double _quicksort(int * a, int n, int rank, int size) {
+  double start, stop;
+
   assert((size-1 & size) == 0);
   assert(n%size == 0);
 
-  if(rank == 0) {
-    //malloc array - is this working if every processor has a? (defined after main header)
-    a = (int*)malloc(n*sizeof(int));
-    printf("Executing with: -n %i -s %i -S %i\n", n, s, seed);
-    generateArray(a, s, n, seed);
-    //printf("starting with array:\n");
-    //_printArray(a, n, "starting with array:", rank, -1);
-    //printf("\n");
-  }
   int * partialArray = (int*)malloc(sizeof(int)*(n/size));
   MPI_Scatter(a, n/size, MPI_INT, partialArray, n/size, MPI_INT, 0, MPI_COMM_WORLD);
-
   MPI_Barrier(MPI_COMM_WORLD);
+
   if(rank == 0) {
     start = MPI_Wtime();
   }
 
-  //start quicksort
   int newSize;
-  partialArray = quicksort(partialArray, n/size, MPI_COMM_WORLD, &newSize);
+  partialArray = _rec_quicksort(partialArray, n/size, MPI_COMM_WORLD, &newSize);
 
   //printf("After Quicksort - rank: %i \n", rank);
   //printArray(partialArray, newSize);
@@ -111,7 +129,6 @@ int main(int argc, char *argv[])
   MPI_Barrier(MPI_COMM_WORLD);
   if(rank == 0) {
     stop = MPI_Wtime();
-    printf(" > %f\n", stop-start);
   }
 
   int * elementsPerProcess = NULL;
@@ -133,17 +150,15 @@ int main(int argc, char *argv[])
     }
   }
   MPI_Gatherv(partialArray, newSize, MPI_INT, a, elementsPerProcess, displacementPerProcess, MPI_INT, 0, MPI_COMM_WORLD);
+  free(partialArray);
   if (rank == 0) {
-    assertSorted(a, n);
     free(elementsPerProcess);
     free(displacementPerProcess);
-    free(a);
   }
-  MPI_Finalize();
-  return 0;
+  return stop-start;
 }
 
-int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
+int * _rec_quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
   int rank,size;
   MPI_Comm_size(comm,&size);
   MPI_Comm_rank(comm,&rank);
@@ -235,5 +250,5 @@ int * quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
   if(comm != MPI_COMM_WORLD)
     MPI_Comm_free(&comm);
 
-  return quicksort(partialArray, partialSize, commNew, newSize);
+  return _rec_quicksort(partialArray, partialSize, commNew, newSize);
 }
