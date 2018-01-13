@@ -1,0 +1,59 @@
+Implementation
+Similar to our method applied in OpenMP we implemented two algorithms in Cilk. Both use cilk_spawn for each recursive call of quicksort but only one parallelizes the partitioning. We refer to the algorithm without parallel partitioning as A to the other as B.
+
+A works by swapping the pivot element to the beginning of the array and letting the partition function run on indexes 1 to n-1. The partition function sets the number of elements smaller than the pivot in a struct. We can use this result to swap the pivot currently at [0] with the last element smaller than the pivot value.
+We then spawn two cilk threads. One on the data to the left side of the pivot and another on the data to the right side of the pivot.
+When n is smaller than the unit value we sort the remaining data sequentially.
+
+
+
+
+B's needs a helper array of size n. This initialization task looks like this:
+
+void publicB(int a[], int n, int maxThreads ) {
+  int * helperArray = malloc(sizeof(int) * n);
+  B(a, n, helperArray);
+  free(helperArray);
+}
+
+A call/recursion of B works like A as long as n is smaller than 10.000. This number has no particular significance and was chosen arbitrarily.
+If n is larger than 10.000 a parallel partitioning algorithm is used in which two threads are spawned that each partition half of the data. First each half is partitioned in place using the aforementioned partitioning algorithm. The result of the partitioning process is copied into the helper array.
+
+partition(a, low, high, result, pivotValue);
+memcpy(helperArray+low, a+low, (sizeof(int) * (high-low+1)));
+
+Each invocation of quicksort uses the same indexes in the helper array and a itself. As no thread is working on the same part of a conflicts are avoided.
+The helper array is necessary to allow for the parallel write back of the partition results of the two threads.
+To do this we spawn to threads. One is responsible for writing back the values smaller than the pivot from the beginning of a until overallSmaller, the other for the larger values starting from overallSmaller+1 until n-1.
+
+cilk_spawn writeBack(helperArray, a, n, &partitionResult1, &partionResult2, writeSmaller: true);
+cilk_spawn writeBack(helperArray, a, n, &partitionResult1, &partionResult2, writeLarger: false);
+
+
+We then swap the pivot with the element with the largest index of values smaller than the pivot.
+
+a[overallSmaller] = pivotValue;
+
+
+We compute the number of elements smaller and larger than the pivot by using the output of the partition functions.
+
+int overallSmaller = res1.smaller + res2.smaller;
+int overallLarger = res1.larger + res2.larger;
+
+Finally we spawn threads for each recursive call.
+cilk_spawn quicksort2(a, overallSmaller, helperArray);
+cilk_spawn quicksort2(a+overallSmaller+1, overallLarger, helperArray+overallSmaller+1);
+
+
+How to run
+
+./main -a {c|C} -n {data-size} -s {kind-of-generated-data}
+
+Use c for A and C for B.
+
+Testing
+The program was tested using ascending, descending, random and periodic data as well as with array sizes 0 and 1.
+An assertion tests if the array is sorted.
+
+Experimental results
+
