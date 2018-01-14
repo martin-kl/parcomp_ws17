@@ -15,25 +15,32 @@
 
 void quicksortOImpl(int a[], int n, int maxThreads);
 void quicksortOImpl2(int a[], int n, int maxThreads, int * helperArray);
+void _run(int a[], int n, int threads, int which);
 
 // --- --- --- --- ---- --- --- ---
-// Method Implementation
+// Method Implementations
 // --- --- --- --- ---- --- --- ---
-//
 
-void quicksortO(int a[], int n, int threads) {
+void quicksortO(int arr[], int n, int maxThreads) {
+  _run(arr, n, maxThreads, 1);
+}
+
+void quicksortO2(int arr[], int n, int maxThreads) {
+  _run(arr, n, maxThreads, 2);
+}
+
+void _run(int a[], int n, int threads, int which) {
   if (threads > 0) {
     if (threads > omp_get_max_threads()) threads = omp_get_max_threads();
     omp_set_num_threads(threads);
   }
-  //if we use first implementation: (comment out lines below)
-  //quicksortOImpl(a, n, threads);
-
-
-  //if we use the second implementation: (comment out line above with quicksort call)
-  int * helperArray = malloc(sizeof(int) * n);
-  quicksortOImpl2(a, n, threads, helperArray);
-  free(helperArray);
+  if (which == 1) {
+    quicksortOImpl(a, n, threads);
+  } else {
+    int * helperArray = malloc(sizeof(int) * n);
+    quicksortOImpl2(a, n, threads, helperArray);
+    free(helperArray);
+  }
 }
 
 void quicksortOImpl(int a[], int n, int maxThreads) {

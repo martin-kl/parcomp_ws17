@@ -37,6 +37,9 @@ void(*getFunction(char c)) (int*, int, int) {
   if (c == 'o') {
     printf("using OpenMP.\n");
     return &quicksortO;
+  } else if (c == 'O') {
+    printf("using OpenMP2.\n");
+    return &quicksortO2;
   } else if (c == 'c') {
     printf("using Cilk.\n");
     return &quicksortC;
@@ -151,7 +154,7 @@ int main(int argc, char *argv[]) {
   assertSorted(a, n);
   printf("time for sequential algorithm: %.5f\n", (stop-start));
   printf("\n");
-  
+
   free(a);
   return 0;
 }

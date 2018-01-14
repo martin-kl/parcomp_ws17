@@ -12,6 +12,8 @@ void quicksortS(int arr[], int low, int high);
 //Definition of openmp implementation
 void quicksortO(int arr[], int n, int maxThreads);
 
+void quicksortO2(int arr[], int n, int maxThreads);
+
 //Definition of cilk implementation
 void quicksortC(int arr[], int n, int maxThreads);
 
