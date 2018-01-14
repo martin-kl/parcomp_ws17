@@ -9,3 +9,5 @@ double mytime();
 
 /* Function to print an array, second parameter is length of arrray */
 void printArray(int arr[], int size);
+
+void assertSorted(int * a, int n);

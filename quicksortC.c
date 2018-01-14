@@ -54,10 +54,8 @@ void quicksort(int a[], int n)
   //if we have just 1 element left return because there is nothing to do
   if (n < 2) return;
 
-  //if we are lover than unit start sequential sort
+  //if we are lower than unit start sequential sort
   if(n <= UNIT) {
-    //INFO: printf not working with optimization flag -O3
-    //printf("switching to sequential qsort because we are at n=%i which is lower than unit=%i\n", n, unit);
     quicksortS(a, 0, n-1);
     return;
   }
@@ -77,10 +75,8 @@ void quicksort(int a[], int n)
   aa = a[0]; a[0] = a[pi]; a[pi] = aa;
 
   //spawn recursive cilk threads
-  //printf("call quicksort recursive with first element in a=%i, j=%i, unit=%i\n", a[0], j, unit);
   cilk_spawn quicksort(a, pi);
 
-  //printf("call quicksort recursive with a=%i, j=%i, unit=%i\n", a[j+1], n-j-1, unit);
   cilk_spawn quicksort(a+pi+1, n-pi-1);
 
   cilk_sync;
@@ -92,7 +88,6 @@ void quicksort(int a[], int n)
 // --- --- ---- ---- ---- ---- ---- ---
 
 void quicksort2(int a[], int n, int * helperArray) {
-  //printf("\nstarting quicksort with n=%i\n", n);
 
   //if we have just 1 element left return because there is nothing to do
   if (n < 2) return;

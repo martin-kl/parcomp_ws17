@@ -11,23 +11,6 @@
 
 double _quicksort(int * a, int n, int rank, int size);
 int * _rec_quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize);
-void assertSorted(int * a, int n) {
-  for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
-}
-
-void _printArray(int arr[], int size, char text[], int rank, int pivotValue) {
-  printf("%s - rank=%i, pivotValue=%i\t\t", text, rank, pivotValue);
-  if (size == 0) {
-    printf("[]\n");
-    return;
-  }
-  printf("[");
-  int i;
-  for (i=0; i < size-1; i++)
-    printf("%d ", arr[i]);
-  printf("%d]\n", arr[size-1]);
-}
-
 
 void generateArray(int *a, int s, int n, unsigned seed) {
   //generate array a:
@@ -70,7 +53,6 @@ int main(int argc, char *argv[])
   unsigned seed = 0;
 
 
-  //now every processor does this - probably not that bad... (but not really needed)
   for (int i=1; i<argc&&argv[i][0]=='-'; i++) {
     if (argv[i][1]=='n') i++,sscanf(argv[i],"%d",&n); //length of array
     if (argv[i][1]=='c') i++,sscanf(argv[i],"%d",&c); //length of array
@@ -80,7 +62,7 @@ int main(int argc, char *argv[])
 
   int * a = (int*)malloc(n*sizeof(int));
   if (rank == 0) {
-    printf("Executing with: -n %i -s %i -S %i -c %i\n", n, s, seed, c);
+    printf("Executing with: -n %i -s %i -S %i -c %i size: %i\n", n, s, seed, c, size);
   }
 
 
@@ -89,10 +71,8 @@ int main(int argc, char *argv[])
   double mean = 0;
   for (int i = 0; i < c; i++) {
     if (rank == 0) { generateArray(a, s, n, seed); }
-    MPI_Barrier(MPI_COMM_WORLD);
 
     double time = _quicksort(a, n, rank, size);
-    MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) {
       assertSorted(a, n);
       times[i] = time;
@@ -125,8 +105,6 @@ double _quicksort(int * a, int n, int rank, int size) {
   int newSize;
   partialArray = _rec_quicksort(partialArray, n/size, MPI_COMM_WORLD, &newSize);
 
-  //printf("After Quicksort - rank: %i \n", rank);
-  //printArray(partialArray, newSize);
 
   MPI_Barrier(MPI_COMM_WORLD);
   if(rank == 0) {
@@ -167,7 +145,6 @@ int * _rec_quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
   //if the processor is alone in the communicator it's time to sort sequentially
   if(group_size == 1) {
     *newSize = n;
-    //start sequential quicksort
     quicksortS(partialArray, 0, n-1);
     return partialArray;
   }
@@ -176,7 +153,6 @@ int * _rec_quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
 
   int pivotValue, pivotIndex;
   if (rank_in_communicator_for_group == 0) {
-    //start = MPI_Wtime();
     if(n == 0) {
       //assume just some value as pivot
       pivotValue = 25;
@@ -201,7 +177,6 @@ int * _rec_quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
   if (rank_in_communicator_for_group < (group_size/2)) { //collect smaller values, send larger values
     int numSmallerFromOtherProcess;
     int partner_process = rank+(group_size/2);
-    printf("<-group_size: %i, partnerprocess of %i is %i\n", group_size, rank, partner_process);
     MPI_Sendrecv(
         &partitionResult.larger, 1, MPI_INT, partner_process, 1,
         &numSmallerFromOtherProcess, 1, MPI_INT, partner_process, 1,
@@ -224,7 +199,6 @@ int * _rec_quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
   } else { //collect larger values, send smaller values
     int numLargerFromOtherProcess;
     int partner_process = rank-(group_size/2);
-    printf("->group_size: %i, partnerprocess of %i is %i\n", group_size, rank, partner_process);
     MPI_Sendrecv(
         &partitionResult.smaller, 1, MPI_INT, partner_process, 1,
         &numLargerFromOtherProcess, 1, MPI_INT, partner_process, 1,
@@ -248,7 +222,6 @@ int * _rec_quicksort(int * partialArray, int n, MPI_Comm comm, int * newSize) {
   }
   free(tempPartialArray);
 
-  //_printArray(partialArray, partialSize, "after partition and exchanging", rank, pivotValue);
 
   MPI_Comm commNew;
 

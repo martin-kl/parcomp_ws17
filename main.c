@@ -29,9 +29,6 @@ void generateArray(int *a, int s, int n, unsigned seed) {
   }
 }
 
-void assertSorted(int * a, int n) {
-  for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
-}
 
 void(*getFunction(char c)) (int*, int, int) {
   if (c == 'o') {
@@ -106,7 +103,6 @@ int main(int argc, char *argv[]) {
     if(times[i] > worst) worst = times[i];
     if(times[i] < best) best = times[i];
     mean += times[i];
-    //printf(" > %f\n", stop-start);
   }
   //only assert last solution
   assertSorted(a, n);
@@ -132,7 +128,6 @@ int main(int argc, char *argv[]) {
       if(times[i] > worst) worst = times[i];
       if(times[i] < best) best = times[i];
       mean += times[i];
-      //printf(" > %f\n", stop-start);
     }
     //assert only last solution
     assertSorted(a, n);

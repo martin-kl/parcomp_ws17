@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <assert.h>
 
 int initializedGenerator = 0;
 int randomNumberBetween(int low, int high) {
@@ -52,4 +53,8 @@ double mytime() {
     struct timeval now;
     gettimeofday(&now, NULL);
     return ((double)((usecs)now.tv_usec + (usecs)now.tv_sec*1000000.0))/1000000.0;
+}
+
+void assertSorted(int * a, int n) {
+  for (int i=0; i<n-1; i++) assert(a[i]<=a[i+1]);
 }
