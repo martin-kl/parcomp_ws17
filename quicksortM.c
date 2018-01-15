@@ -60,10 +60,22 @@ int main(int argc, char *argv[])
     if (argv[i][1]=='S') i++,sscanf(argv[i],"%d",&seed);
   }
 
-  int * a = (int*)malloc(n*sizeof(int));
-  if (rank == 0) {
-    printf("Executing with: -n %i -s %i -S %i -c %i size: %i\n", n, s, seed, c, size);
+
+  if (n%size != 0) {
+    if (rank == 0) { printf("Number of processors must divide n, given n=%i and processors=%i\n.", n, size); }
+    MPI_Finalize();
+    return 0;
   }
+
+  if ((size-1 & size) != 0) {
+    if (rank == 0) { printf("Number of processors must be a power of 2, given processors=%i.\n", size); }
+    MPI_Finalize();
+    return 0;
+  }
+
+  if (rank == 0) { printf("Executing with: -n %i -s %i -S %i -c %i size: %i\n", n, s, seed, c, size); }
+
+  int * a = (int*)malloc(n*sizeof(int));
 
 
 
@@ -91,8 +103,7 @@ int main(int argc, char *argv[])
 double _quicksort(int * a, int n, int rank, int size) {
   double start, stop;
 
-  assert((size-1 & size) == 0);
-  assert(n%size == 0);
+
 
   int * partialArray = (int*)malloc(sizeof(int)*(n/size));
   MPI_Scatter(a, n/size, MPI_INT, partialArray, n/size, MPI_INT, 0, MPI_COMM_WORLD);
